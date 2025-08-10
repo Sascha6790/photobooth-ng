@@ -37,9 +37,9 @@ If applicable, add screenshots to demonstrate the changes.
 - [ ] New and existing unit tests pass locally with my changes
 - [ ] Any dependent changes have been merged and published
 
-### 🔄 Migration Notes
-If this PR requires any migration steps, please describe them here:
-- Database migrations needed: Yes/No
+### 🔄 Update Notes
+If this PR requires any update steps, please describe them here:
+- Database schema changes: Yes/No
 - Configuration changes needed: Yes/No
 - Breaking changes: Yes/No
 

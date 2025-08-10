@@ -1,96 +1,217 @@
-# PhotoboothNg
+# Photobooth - Modern Event Photography Platform
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+[![Build Status](https://github.com/Sascha6790/photobooth-ng/workflows/build/badge.svg)](https://github.com/Sascha6790/photobooth-ng/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+A professional, feature-rich photobooth application built with modern web technologies. Perfect for events, weddings, parties, and exhibitions.
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/getting-started/intro#learn-nx?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+## 🎯 Features
 
-## Run tasks
+- **📸 Multiple Camera Support**: DSLR (gphoto2), Webcam, Raspberry Pi Camera
+- **🎨 Real-time Filters & Effects**: Apply filters, frames, and chromakey backgrounds
+- **🖼️ Gallery Mode**: Beautiful gallery with tagging, ratings, and slideshow
+- **🖨️ Print Queue Management**: Direct printing with queue management
+- **📱 Multi-Device Support**: Responsive design for tablets and smartphones
+- **🌐 Multi-Language**: German and English support
+- **⚡ Real-time Updates**: WebSocket-based live updates
+- **🎮 Hardware Integration**: GPIO support for physical buttons and buzzers
+- **🔒 Admin Dashboard**: Comprehensive settings management
+- **🐳 Docker Support**: Easy deployment with Docker containers
 
-To run tasks with Nx use:
+## 🚀 Quick Start
 
-```sh
-npx nx <target> <project-name>
+### Prerequisites
+
+- Node.js 20+
+- npm or yarn
+- Optional: Docker & Docker Compose
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/Sascha6790/photobooth-ng.git
+cd photobooth-ng
+
+# Install dependencies
+npm install
+
+# Start development servers
+npm run dev
 ```
 
-For example:
+### Using Management Scripts
 
-```sh
-npx nx build myproject
+For better control and monitoring, use our management scripts:
+
+```bash
+# Backend (Port 3000)
+./scripts/backend-start.sh    # Start backend
+./scripts/backend-stop.sh     # Stop backend
+./scripts/backend-monitor.sh  # Monitor backend
+
+# Frontend (Port 4200)
+./scripts/frontend-start.sh   # Start frontend
+./scripts/frontend-stop.sh    # Stop frontend
+
+# API Testing
+./scripts/api-test.sh         # Test all API endpoints
 ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+### Docker Deployment
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+```bash
+# Development
+docker-compose -f docker-compose.dev.yml up
 
-## Add new projects
-
-While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
-
-To install a new plugin you can use the `nx add` command. Here's an example of adding the React plugin:
-```sh
-npx nx add @nx/react
+# Production
+docker-compose -f docker-compose.prod.yml up -d
 ```
 
-Use the plugin's generator to create new projects. For example, to create a new React app or library:
+## 📁 Project Structure
 
-```sh
-# Generate an app
-npx nx g @nx/react:app demo
-
-# Generate a library
-npx nx g @nx/react:lib some-lib
+```
+photobooth-ng/
+├── apps/
+│   ├── backend/         # NestJS backend application
+│   └── frontend/        # Angular frontend application
+├── libs/                # Shared libraries
+├── scripts/             # Management and deployment scripts
+├── docs/                # Documentation
+└── docker/              # Docker configurations
 ```
 
-You can use `npx nx list` to get a list of installed plugins. Then, run `npx nx list <plugin-name>` to learn about more specific capabilities of a particular plugin. Alternatively, [install Nx Console](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) to browse plugins and generators in your IDE.
+## 🔧 Configuration
 
-[Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+### Environment Variables
 
-## Set up CI!
+Copy `.env.example` to `.env` and configure:
 
-### Step 1
+```env
+# Database
+DB_TYPE=sqlite
+DB_DATABASE=./data/photobooth.db
 
-To connect to Nx Cloud, run the following command:
+# Camera
+CAMERA_MODE=webcam  # Options: webcam, gphoto2, raspistill, mock
 
-```sh
-npx nx connect
+# Server
+PORT=3000
+FRONTEND_PORT=4200
 ```
 
-Connecting to Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
+### Camera Configuration
 
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+The application supports multiple camera types:
 
-### Step 2
+- **Webcam**: USB webcams (automatic detection)
+- **DSLR**: Canon/Nikon via gphoto2
+- **Raspberry Pi Camera**: Using raspistill
+- **Mock**: Development mode with test images
 
-Use the following command to configure a CI workflow for your workspace:
+## 🎨 Features in Detail
 
-```sh
-npx nx g ci-workflow
+### Photo Modes
+- Single photo capture
+- Photo series (2x2, 3x3 grid)
+- Collage mode with templates
+- Video recording
+- GIF animation
+
+### Image Processing
+- Real-time filters (B&W, Sepia, Vintage, etc.)
+- Custom frames and overlays
+- Green screen (chromakey) support
+- Text and sticker overlays
+- QR code generation for sharing
+
+### Gallery Features
+- Thumbnail generation
+- Tag system
+- Rating system
+- Slideshow mode
+- Export options
+
+## 🔨 Development
+
+### Running Tests
+
+```bash
+# Unit tests
+npm run test
+
+# E2E tests
+npm run e2e
+
+# Test coverage
+npm run test:cov
 ```
 
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+### Building for Production
 
-## Install Nx Console
+```bash
+# Build all applications
+npm run build
 
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
+# Build specific app
+npx nx build backend
+npx nx build frontend
+```
 
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+## 📦 Deployment
 
-## Useful links
+### Raspberry Pi
 
-Learn more:
+For Raspberry Pi deployment, see [Hardware Setup Guide](docs/HARDWARE_SETUP.md).
 
-- [Learn more about this workspace setup](https://nx.dev/getting-started/intro#learn-nx?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+```bash
+# Quick setup
+./scripts/install-raspberry-pi.sh
 
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+# Deploy updates
+./scripts/deploy-raspberry-pi.sh
+```
+
+### HTTPS Setup
+
+```bash
+# Configure Let's Encrypt
+./scripts/setup-https.sh
+```
+
+## 📚 Documentation
+
+- [User Manual](docs/USER_MANUAL.md)
+- [Admin Guide](docs/ADMIN_GUIDE.md)
+- [API Documentation](docs/api/)
+- [Hardware Setup](docs/HARDWARE_SETUP.md)
+- [Troubleshooting](docs/TROUBLESHOOTING.md)
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Built with [NestJS](https://nestjs.com/) and [Angular](https://angular.io/)
+- Powered by [Nx](https://nx.dev/) workspace
+- Camera integration via [gphoto2](http://gphoto.org/)
+- Image processing with [Sharp](https://sharp.pixelplumbing.com/)
+
+## 📧 Contact
+
+Project Link: [https://github.com/Sascha6790/photobooth-ng](https://github.com/Sascha6790/photobooth-ng)
+
+---
+
+Made with ❤️ for events and celebrations

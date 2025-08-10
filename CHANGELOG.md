@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### ✨ Features
-- Complete migration from PHP to NestJS + Angular
+- Modern architecture with NestJS + Angular
 - WebSocket support for real-time updates
 - Multiple camera strategy implementations (Webcam, DSLR, Raspberry Pi Camera, Mock)
 - Advanced image processing with filters and effects
@@ -52,8 +52,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Multi-browser testing support
 
 ## [1.0.0] - TBD
-- Initial release of the migrated Photobooth application
-- Full feature parity with PHP version
+- Initial release of Photobooth application
+- Full-featured event photography platform
 - Production-ready for Raspberry Pi deployment
 
 [Unreleased]: https://github.com/Sascha6790/photobooth-ng/compare/v1.0.0...HEAD

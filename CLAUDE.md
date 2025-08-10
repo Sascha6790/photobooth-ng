@@ -1,22 +1,22 @@
-# Photobooth Migration: PHP → NestJS + Angular
+# Photobooth - Modern Event Photography Platform
 
 ## Projektübersicht
-Migration einer PHP-basierten Photobooth-Anwendung zu einer modernen NestJS (Backend) + Angular (Frontend) Architektur.
+Moderne Photobooth-Anwendung mit NestJS Backend und Angular Frontend für Events, Hochzeiten und Veranstaltungen.
 
-## Aktueller Status (10.08.2025)
-- **Backend**: NestJS mit allen Services implementiert
+## Tech Stack
+- **Backend**: NestJS mit umfangreichen Services
 - **Database**: TypeORM mit PostgreSQL/SQLite
 - **WebSocket**: Socket.IO für Realtime-Features
 - **Docker**: Vollständige Containerisierung
-- **Hardware**: GPIO & Camera Service implementiert
+- **Hardware**: GPIO & Camera Service (DSLR, Webcam, Raspberry Pi Camera)
 - **Frontend**: Angular mit Admin UI, Settings und Gallery
 
 ## Projektstruktur
 ```
 /photobooth-ng
   /apps
-    /backend  (NestJS - ✅ fertig)
-    /frontend (Angular - 70% fertig)
+    /backend  (NestJS)
+    /frontend (Angular)
   /libs      (Shared libraries)
 ```
 
