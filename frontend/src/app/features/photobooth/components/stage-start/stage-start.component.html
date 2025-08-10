@@ -1,0 +1,23 @@
+<div class="stage-start" data-testid="stage-start">
+  <div class="container">
+    <div class="logo-container" *ngIf="(config$ | async)?.ui?.showLogo">
+      <img [src]="logoUrl" alt="Photobooth Logo" class="logo">
+    </div>
+    
+    <div class="welcome-text">
+      <h1 class="title" data-testid="welcome-title">{{ 'start.welcome' | translate }}</h1>
+      <p class="subtitle">{{ 'start.chooseMode' | translate }}</p>
+    </div>
+    
+    <div class="action-buttons">
+      <app-button
+        [label]="'start.takePhoto' | translate"
+        [icon]="'📷'"
+        type="primary"
+        size="large"
+        data-testid="start-button"
+        (clicked)="onStart()">
+      </app-button>
+    </div>
+  </div>
+</div>

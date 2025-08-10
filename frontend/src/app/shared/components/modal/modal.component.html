@@ -1,0 +1,11 @@
+<div class="modal-overlay" *ngIf="visible" (click)="close()">
+  <div class="modal-content" [class.modal-small]="size === 'small'" [class.modal-large]="size === 'large'" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2 class="modal-title">{{ title }}</h2>
+      <button class="modal-close" (click)="close()">×</button>
+    </div>
+    <div class="modal-body">
+      <ng-content></ng-content>
+    </div>
+  </div>
+</div>

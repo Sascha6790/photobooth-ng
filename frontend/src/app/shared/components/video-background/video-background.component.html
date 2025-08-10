@@ -1,0 +1,19 @@
+<div class="video-background-container" *ngIf="enabled && currentVideo">
+  <video
+    #videoElement
+    class="video-background"
+    [src]="currentVideo.src"
+    [poster]="currentVideo.poster"
+    [loop]="currentVideo.loop !== false"
+    [muted]="currentVideo.muted !== false"
+    [autoplay]="currentVideo.autoplay !== false"
+    [ngStyle]="videoStyle"
+    (ended)="onVideoEnded()"
+    (error)="onVideoError($event)"
+    playsinline
+  >
+    Your browser does not support the video tag.
+  </video>
+  
+  <div class="video-overlay"></div>
+</div>

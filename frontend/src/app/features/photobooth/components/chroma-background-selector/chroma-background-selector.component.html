@@ -1,0 +1,59 @@
+<div class="background-selector">
+  <div class="selector-header">
+    <h3 class="selector-title">Choose Background</h3>
+    <button class="settings-btn" (click)="toggleSettings()">
+      ⚙️ Settings
+    </button>
+  </div>
+  
+  <div class="settings-panel" *ngIf="showSettings">
+    <div class="setting-item">
+      <label class="setting-label">Chroma Color:</label>
+      <input 
+        type="color" 
+        [value]="chromaColor"
+        (change)="updateColor($event)"
+        class="color-input">
+      <span class="color-value">{{ chromaColor }}</span>
+    </div>
+    
+    <div class="setting-item">
+      <label class="setting-label">Tolerance:</label>
+      <input 
+        type="range" 
+        min="0" 
+        max="1" 
+        step="0.05"
+        [value]="chromaTolerance"
+        (input)="updateTolerance($event)"
+        class="range-input">
+      <span class="range-value">{{ (chromaTolerance * 100).toFixed(0) }}%</span>
+    </div>
+  </div>
+  
+  <div class="backgrounds-grid">
+    <div 
+      class="background-item"
+      *ngFor="let bg of backgrounds"
+      [class.selected]="selectedBackground?.id === bg.id"
+      (click)="selectBackground(bg)">
+      <img 
+        [src]="bg.thumbnail || bg.url" 
+        [alt]="bg.name"
+        class="background-thumbnail">
+      <span class="background-name">{{ bg.name }}</span>
+    </div>
+    
+    <div class="background-item upload-item">
+      <label class="upload-label">
+        <input 
+          type="file" 
+          accept="image/*"
+          (change)="uploadCustomBackground($event)"
+          class="upload-input">
+        <span class="upload-icon">📤</span>
+        <span class="background-name">Upload</span>
+      </label>
+    </div>
+  </div>
+</div>

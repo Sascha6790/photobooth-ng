@@ -1,0 +1,113 @@
+<div 
+  class="filter-nav-container" 
+  [class]="positionClass"
+  [class.collapsed]="collapsed"
+  [@slideIn]
+>
+  <!-- Header -->
+  <div class="filter-nav-header">
+    <button class="toggle-btn" (click)="toggleCollapse()">
+      <span class="toggle-icon">{{ collapsed ? '▶' : '◀' }}</span>
+    </button>
+    <h3 *ngIf="!collapsed">Filters</h3>
+    <button class="reset-btn" *ngIf="!collapsed && selectedFilters.length > 0" (click)="resetFilters()">
+      Reset
+    </button>
+  </div>
+  
+  <!-- Search -->
+  <div class="filter-search" *ngIf="!collapsed && getAllFilters().length > 6">
+    <input 
+      type="text"
+      [value]="searchTerm"
+      (input)="onSearchInput($event)"
+      placeholder="Search filters..."
+      class="search-input"
+    />
+    <button *ngIf="searchTerm" (click)="clearSearch()" class="clear-search">✕</button>
+  </div>
+  
+  <!-- Categories -->
+  <div class="filter-categories" *ngIf="!collapsed && categories.length > 0 && !searchTerm">
+    <button 
+      *ngFor="let category of categories"
+      (click)="selectCategory(category)"
+      [class.active]="activeCategory === category"
+      class="category-btn"
+    >
+      {{ category.name }}
+    </button>
+    <button 
+      *ngIf="activeCategory"
+      (click)="selectCategory(null)"
+      class="category-btn all-btn"
+    >
+      All
+    </button>
+  </div>
+  
+  <!-- Filters Grid -->
+  <div class="filter-grid" *ngIf="!collapsed">
+    <div 
+      *ngFor="let filter of displayFilters"
+      class="filter-item"
+      [class.selected]="isFilterSelected(filter)"
+      [class.active]="filter.active"
+      (click)="selectFilter(filter)"
+      (mouseenter)="onFilterHover(filter)"
+      (mouseleave)="onFilterLeave()"
+      [@fadeIn]
+    >
+      <!-- Filter Preview -->
+      <div class="filter-preview" *ngIf="showPreview && filter.preview">
+        <img [src]="filter.preview" [alt]="filter.name" />
+      </div>
+      
+      <!-- Filter Icon -->
+      <div class="filter-icon" *ngIf="!showPreview || !filter.preview">
+        <span *ngIf="filter.icon">{{ filter.icon }}</span>
+        <span *ngIf="!filter.icon" class="filter-initial">
+          {{ filter.name.charAt(0).toUpperCase() }}
+        </span>
+      </div>
+      
+      <!-- Filter Name -->
+      <div class="filter-name">{{ filter.name }}</div>
+      
+      <!-- Intensity Slider -->
+      <div 
+        class="filter-intensity" 
+        *ngIf="showIntensitySlider && isFilterSelected(filter) && filter.id !== 'none'"
+        (click)="$event.stopPropagation()"
+      >
+        <input 
+          type="range"
+          min="0"
+          max="100"
+          [value]="(filter.intensity || 1) * 100"
+          (input)="onIntensityChange(filter, $event)"
+          class="intensity-slider"
+        />
+        <span class="intensity-value">{{ ((filter.intensity || 1) * 100).toFixed(0) }}%</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Preview Panel -->
+  <div class="preview-panel" *ngIf="!collapsed && hoveredFilter && showPreview">
+    <h4>{{ hoveredFilter.name }}</h4>
+    <p *ngIf="hoveredFilter.params">
+      Settings: {{ hoveredFilter.params | json }}
+    </p>
+  </div>
+  
+  <!-- Multi-select Actions -->
+  <div class="filter-actions" *ngIf="!collapsed && multiSelect && selectedFilters.length > 0">
+    <div class="selected-count">
+      {{ selectedFilters.length }} filter(s) selected
+    </div>
+    <button class="apply-btn" (click)="filterChange.emit(selectedFilters)">
+      Apply Filters
+    </button>
+  </div>
+</div>

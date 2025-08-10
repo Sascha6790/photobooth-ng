@@ -1,0 +1,85 @@
+<!-- PIN Dialog -->
+<div class="pin-dialog-overlay" *ngIf="showPinDialog" (click)="closePinDialog()">
+  <div class="pin-dialog" (click)="$event.stopPropagation()">
+    <div class="pin-dialog-header">
+      <h2>Admin Access</h2>
+      <button class="close-btn" (click)="closePinDialog()">✕</button>
+    </div>
+    
+    <div class="pin-dialog-body">
+      <p>Enter PIN to access admin panel:</p>
+      
+      <div class="pin-input-container">
+        <input
+          type="password"
+          [(ngModel)]="enteredPin"
+          (keypress)="onPinKeyPress($event)"
+          [class.error]="pinError"
+          class="pin-input"
+          placeholder="••••"
+          maxlength="10"
+          autocomplete="off"
+          #pinInput
+        />
+        
+        <div class="pin-dots">
+          <span 
+            *ngFor="let i of [0,1,2,3]" 
+            class="pin-dot"
+            [class.filled]="enteredPin.length > i"
+          ></span>
+        </div>
+      </div>
+      
+      <div class="error-message" *ngIf="pinError">
+        Incorrect PIN. Please try again.
+      </div>
+      
+      <div class="pin-keypad">
+        <button 
+          *ngFor="let num of [1,2,3,4,5,6,7,8,9]"
+          (click)="enteredPin = enteredPin + num"
+          class="keypad-btn"
+        >
+          {{ num }}
+        </button>
+        <button 
+          (click)="enteredPin = enteredPin.slice(0, -1)"
+          class="keypad-btn keypad-clear"
+        >
+          ←
+        </button>
+        <button 
+          (click)="enteredPin = enteredPin + '0'"
+          class="keypad-btn"
+        >
+          0
+        </button>
+        <button 
+          (click)="verifyPin()"
+          class="keypad-btn keypad-enter"
+          [disabled]="!enteredPin"
+        >
+          ✓
+        </button>
+      </div>
+    </div>
+    
+    <div class="pin-dialog-footer">
+      <button class="btn-cancel" (click)="closePinDialog()">Cancel</button>
+      <button 
+        class="btn-verify" 
+        (click)="verifyPin()"
+        [disabled]="!enteredPin"
+      >
+        Verify
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Corner tap indicators (optional visual feedback) -->
+<div class="corner-indicator top-left" *ngIf="config.cornerTap"></div>
+<div class="corner-indicator top-right" *ngIf="config.cornerTap"></div>
+<div class="corner-indicator bottom-left" *ngIf="config.cornerTap"></div>
+<div class="corner-indicator bottom-right" *ngIf="config.cornerTap"></div>

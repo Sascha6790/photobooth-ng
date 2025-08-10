@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Test - Photobooth</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        .disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .log {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            background: white;
+            border-left: 3px solid #007bff;
+        }
+        .metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .metric {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .metric-label {
+            font-size: 12px;
+            color: #6c757d;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎈 Photobooth WebSocket Test</h1>
+    
+    <div id="status" class="status disconnected">
+        Status: <span id="connectionStatus">Disconnected</span>
+    </div>
+
+    <div class="container">
+        <div class="section">
+            <h2>Remote Buzzer</h2>
+            
+            <div>
+                <input type="text" id="sessionId" placeholder="Session ID" value="test-session">
+                <input type="text" id="pin" placeholder="PIN (min. 4 chars)" value="1234">
+            </div>
+            
+            <div>
+                <button onclick="createBuzzerSession()">Create Session</button>
+                <button onclick="joinBuzzerSession()">Join Session</button>
+                <button onclick="triggerBuzzer()">🔴 Trigger</button>
+                <button onclick="leaveBuzzerSession()">Leave Session</button>
+            </div>
+            
+            <div id="buzzerStatus" style="margin-top: 10px; color: #666;">
+                No active buzzer session
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Gallery Updates</h2>
+            
+            <div>
+                <button onclick="sendGalleryUpdate('new-image')">Add Image</button>
+                <button onclick="sendGalleryUpdate('delete-image')">Delete Image</button>
+                <button onclick="sendGalleryUpdate('refresh')">Refresh Gallery</button>
+            </div>
+            
+            <div class="log" id="galleryLog"></div>
+        </div>
+
+        <div class="section">
+            <h2>Room Management</h2>
+            
+            <div>
+                <input type="text" id="roomName" placeholder="Room Name" value="main-room">
+                <input type="text" id="userId" placeholder="User ID" value="user-123">
+            </div>
+            
+            <div>
+                <button onclick="joinRoom()">Join Room</button>
+                <button onclick="leaveRoom()">Leave Room</button>
+                <button onclick="broadcastToRoom()">Broadcast Message</button>
+            </div>
+            
+            <div id="roomStatus" style="margin-top: 10px; color: #666;">
+                Not in any room
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>System Metrics</h2>
+            
+            <button onclick="getMetrics()">Get Metrics</button>
+            <button onclick="getActiveSessions()">Get Active Sessions</button>
+            
+            <div class="metrics" style="margin-top: 20px;">
+                <div class="metric">
+                    <div class="metric-label">Active Connections</div>
+                    <div class="metric-value" id="activeConnections">-</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">CPU Usage</div>
+                    <div class="metric-value" id="cpuUsage">-</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Memory Usage</div>
+                    <div class="metric-value" id="memoryUsage">-</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Uptime</div>
+                    <div class="metric-value" id="uptime">-</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section" style="margin-top: 20px;">
+        <h2>Event Log</h2>
+        <button onclick="clearLog()">Clear Log</button>
+        <div class="log" id="eventLog"></div>
+    </div>
+
+    <script>
+        const socket = io('http://localhost:3000', {
+            transports: ['websocket', 'polling'],
+            reconnection: true,
+            reconnectionDelay: 1000,
+        });
+
+        let currentSession = null;
+        let currentRoom = null;
+
+        function log(message, type = 'info') {
+            const eventLog = document.getElementById('eventLog');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            eventLog.insertBefore(entry, eventLog.firstChild);
+        }
+
+        function updateStatus(connected) {
+            const status = document.getElementById('status');
+            const statusText = document.getElementById('connectionStatus');
+            
+            if (connected) {
+                status.className = 'status connected';
+                statusText.textContent = `Connected (ID: ${socket.id})`;
+            } else {
+                status.className = 'status disconnected';
+                statusText.textContent = 'Disconnected';
+            }
+        }
+
+        socket.on('connect', () => {
+            log('Connected to server');
+            updateStatus(true);
+        });
+
+        socket.on('disconnect', () => {
+            log('Disconnected from server');
+            updateStatus(false);
+        });
+
+        socket.on('buzzer-triggered', (data) => {
+            log(`🔴 BUZZER TRIGGERED by ${data.triggeredBy}`, 'buzzer');
+            alert('Buzzer triggered!');
+        });
+
+        socket.on('gallery-update', (data) => {
+            const galleryLog = document.getElementById('galleryLog');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = `Gallery: ${data.type}`;
+            galleryLog.insertBefore(entry, galleryLog.firstChild);
+            log(`Gallery update: ${data.type}`);
+        });
+
+        socket.on('monitoring-metrics-update', (data) => {
+            if (data.connections) {
+                document.getElementById('activeConnections').textContent = data.connections.active;
+            }
+            if (data.system) {
+                document.getElementById('cpuUsage').textContent = `${data.system.cpu.usage}%`;
+                document.getElementById('memoryUsage').textContent = `${Math.round(data.system.memory.percentage)}%`;
+                document.getElementById('uptime').textContent = `${Math.round(data.system.uptime.process / 60)}m`;
+            }
+        });
+
+        function createBuzzerSession() {
+            const sessionId = document.getElementById('sessionId').value;
+            const pin = document.getElementById('pin').value;
+            
+            socket.emit('remote-buzzer', {
+                action: 'create',
+                sessionId,
+                pin
+            }, (response) => {
+                if (response.success) {
+                    currentSession = sessionId;
+                    document.getElementById('buzzerStatus').textContent = `Session created: ${sessionId} (Master)`;
+                    log(`Buzzer session created: ${sessionId}`);
+                } else {
+                    log(`Failed to create session: ${response.error}`, 'error');
+                }
+            });
+        }
+
+        function joinBuzzerSession() {
+            const sessionId = document.getElementById('sessionId').value;
+            const pin = document.getElementById('pin').value;
+            
+            socket.emit('remote-buzzer', {
+                action: 'join',
+                sessionId,
+                pin
+            }, (response) => {
+                if (response.success) {
+                    currentSession = sessionId;
+                    document.getElementById('buzzerStatus').textContent = `Joined session: ${sessionId}`;
+                    log(`Joined buzzer session: ${sessionId}`);
+                } else {
+                    log(`Failed to join session: ${response.error}`, 'error');
+                }
+            });
+        }
+
+        function triggerBuzzer() {
+            if (!currentSession) {
+                alert('Please create or join a session first');
+                return;
+            }
+            
+            socket.emit('remote-buzzer', {
+                action: 'trigger',
+                sessionId: currentSession
+            }, (response) => {
+                if (response.success) {
+                    log('Buzzer triggered successfully');
+                } else {
+                    log(`Failed to trigger buzzer: ${response.error}`, 'error');
+                }
+            });
+        }
+
+        function leaveBuzzerSession() {
+            if (!currentSession) {
+                alert('No active session');
+                return;
+            }
+            
+            socket.emit('remote-buzzer', {
+                action: 'leave',
+                sessionId: currentSession
+            }, (response) => {
+                if (response.success) {
+                    document.getElementById('buzzerStatus').textContent = 'No active buzzer session';
+                    log(`Left buzzer session: ${currentSession}`);
+                    currentSession = null;
+                } else {
+                    log(`Failed to leave session: ${response.error}`, 'error');
+                }
+            });
+        }
+
+        function sendGalleryUpdate(action) {
+            socket.emit('gallery-update', {
+                action,
+                imageData: action === 'new-image' ? { id: Date.now(), url: 'test.jpg' } : { id: '123' },
+                room: currentRoom
+            }, (response) => {
+                if (response.success) {
+                    log(`Gallery update sent: ${action}`);
+                } else {
+                    log(`Gallery update failed: ${response.error}`, 'error');
+                }
+            });
+        }
+
+        function joinRoom() {
+            const roomName = document.getElementById('roomName').value;
+            const userId = document.getElementById('userId').value;
+            
+            socket.emit('join-room', {
+                room: roomName,
+                userId
+            }, (response) => {
+                if (response.success) {
+                    currentRoom = roomName;
+                    document.getElementById('roomStatus').textContent = `In room: ${roomName}`;
+                    log(`Joined room: ${roomName}`);
+                } else {
+                    log(`Failed to join room: ${response.error}`, 'error');
+                }
+            });
+        }
+
+        function leaveRoom() {
+            if (!currentRoom) {
+                alert('Not in any room');
+                return;
+            }
+            
+            const userId = document.getElementById('userId').value;
+            
+            socket.emit('leave-room', {
+                room: currentRoom,
+                userId
+            }, (response) => {
+                if (response.success) {
+                    document.getElementById('roomStatus').textContent = 'Not in any room';
+                    log(`Left room: ${currentRoom}`);
+                    currentRoom = null;
+                } else {
+                    log(`Failed to leave room: ${response.error}`, 'error');
+                }
+            });
+        }
+
+        function broadcastToRoom() {
+            if (!currentRoom) {
+                alert('Please join a room first');
+                return;
+            }
+            
+            socket.emit('broadcast-to-room', {
+                room: currentRoom,
+                event: 'test-message',
+                payload: { message: 'Hello from test client!' }
+            }, (response) => {
+                if (response.success) {
+                    log(`Broadcast sent to room: ${currentRoom}`);
+                } else {
+                    log(`Broadcast failed: ${response.error}`, 'error');
+                }
+            });
+        }
+
+        function getMetrics() {
+            socket.emit('get-metrics', {}, (response) => {
+                if (response.success) {
+                    log('Metrics received');
+                    if (response.connections) {
+                        document.getElementById('activeConnections').textContent = response.connections.active;
+                    }
+                    if (response.system) {
+                        document.getElementById('cpuUsage').textContent = `${response.system.cpu.usage}%`;
+                        document.getElementById('memoryUsage').textContent = `${Math.round(response.system.memory.percentage)}%`;
+                        document.getElementById('uptime').textContent = `${Math.round(response.system.uptime.process / 60)}m`;
+                    }
+                } else {
+                    log('Failed to get metrics', 'error');
+                }
+            });
+        }
+
+        function getActiveSessions() {
+            socket.emit('get-active-sessions', {}, (response) => {
+                if (response.success) {
+                    log(`Active sessions: ${response.totalSessions}`);
+                    console.log('Sessions:', response.sessions);
+                } else {
+                    log('Failed to get active sessions', 'error');
+                }
+            });
+        }
+
+        function clearLog() {
+            document.getElementById('eventLog').innerHTML = '';
+            document.getElementById('galleryLog').innerHTML = '';
+        }
+    </script>
+</body>
+</html>

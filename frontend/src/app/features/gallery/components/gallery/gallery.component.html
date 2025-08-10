@@ -1,0 +1,72 @@
+<div class="gallery-container" data-testid="gallery-container">
+  <header class="gallery-header">
+    <h1 class="gallery-title" data-testid="gallery-title">{{ 'gallery.title' | translate }}</h1>
+    <button class="back-button" data-testid="gallery-back" (click)="goBack()">
+      ← {{ 'gallery.back' | translate }}
+    </button>
+  </header>
+  
+  <div class="gallery-content">
+    <app-loader 
+      *ngIf="isLoading"
+      [message]="'messages.loading' | translate"
+      size="large">
+    </app-loader>
+    
+    <div class="images-grid" data-testid="gallery-grid" *ngIf="!isLoading && images.length > 0">
+      <div class="image-card" data-testid="gallery-item" *ngFor="let image of images">
+        <img 
+          [src]="image" 
+          [alt]="'Gallery image'"
+          class="thumbnail"
+          (click)="openImage(image)">
+        <div class="image-actions">
+          <button 
+            class="action-btn download"
+            (click)="downloadImage(image)"
+            [title]="'buttons.save' | translate">
+            💾
+          </button>
+          <button 
+            class="action-btn delete"
+            (click)="deleteImage(image)"
+            [title]="'gallery.deleteImage' | translate">
+            🗑️
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="empty-state" data-testid="gallery-empty" *ngIf="!isLoading && images.length === 0">
+      <span class="empty-icon">📷</span>
+      <p class="empty-text">{{ 'gallery.emptyGallery' | translate }}</p>
+    </div>
+    
+    <div class="pagination" *ngIf="totalImages > imagesPerPage">
+      <app-button
+        [label]="'gallery.previous' | translate"
+        type="secondary"
+        [disabled]="!hasPreviousPage()"
+        (clicked)="previousPage()">
+      </app-button>
+      
+      <span class="page-info">
+        {{ 'gallery.page' | translate }} {{ currentPage }} / {{ totalPages }}
+      </span>
+      
+      <app-button
+        [label]="'gallery.next' | translate"
+        type="secondary"
+        [disabled]="!hasNextPage()"
+        (clicked)="nextPage()">
+      </app-button>
+    </div>
+  </div>
+  
+  <div class="lightbox" *ngIf="showLightbox && selectedImage" (click)="closeLightbox()">
+    <div class="lightbox-content" (click)="$event.stopPropagation()">
+      <img [src]="selectedImage" alt="Full size image" class="lightbox-image">
+      <button class="lightbox-close" (click)="closeLightbox()">×</button>
+    </div>
+  </div>
+</div>

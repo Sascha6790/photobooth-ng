@@ -1,0 +1,297 @@
+<div class="system-control">
+  <div class="system-header">
+    <h2>System Control</h2>
+    
+    <div class="system-info" *ngIf="systemInfo">
+      <span class="info-item">
+        <i class="icon-server"></i> {{ systemInfo.hostname }}
+      </span>
+      <span class="info-item">
+        <i class="icon-cpu"></i> {{ systemInfo.platform }} ({{ systemInfo.arch }})
+      </span>
+      <span class="info-item">
+        <i class="icon-node"></i> Node {{ systemInfo.nodeVersion }}
+      </span>
+      <span class="info-item">
+        <i class="icon-clock"></i> Uptime: {{ formatUptime(systemInfo.uptime) }}
+      </span>
+      <span class="info-item environment-badge" [class]="systemInfo.environment">
+        {{ systemInfo.environment }}
+      </span>
+    </div>
+  </div>
+
+  <div class="control-panels">
+    <!-- System Metrics Panel -->
+    <div class="panel metrics-panel">
+      <h3>System Metrics</h3>
+      
+      <div class="metrics-grid" *ngIf="systemMetrics">
+        <div class="metric-card">
+          <div class="metric-header">
+            <i class="icon-cpu"></i>
+            <span>CPU</span>
+          </div>
+          <div class="metric-value">{{ systemMetrics.cpu.usage }}%</div>
+          <div class="metric-details">
+            {{ systemMetrics.cpu.cores }} cores - {{ systemMetrics.cpu.model }}
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill cpu" [style.width.%]="systemMetrics.cpu.usage"></div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <i class="icon-memory"></i>
+            <span>Memory</span>
+          </div>
+          <div class="metric-value">{{ systemMetrics.memory.percentage }}%</div>
+          <div class="metric-details">
+            {{ formatBytes(systemMetrics.memory.used) }} / {{ formatBytes(systemMetrics.memory.total) }}
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill memory" [style.width.%]="systemMetrics.memory.percentage"></div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <i class="icon-disk"></i>
+            <span>Disk</span>
+          </div>
+          <div class="metric-value">{{ systemMetrics.disk.percentage }}%</div>
+          <div class="metric-details">
+            {{ formatBytes(systemMetrics.disk.used) }} / {{ formatBytes(systemMetrics.disk.total) }}
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill disk" [style.width.%]="systemMetrics.disk.percentage"></div>
+          </div>
+        </div>
+
+        <div class="metric-card" *ngIf="systemMetrics.temperature">
+          <div class="metric-header">
+            <i class="icon-thermometer"></i>
+            <span>Temperature</span>
+          </div>
+          <div class="metric-value">{{ systemMetrics.temperature }}°C</div>
+          <div class="metric-details">
+            <span [class.warning]="systemMetrics.temperature > 70">
+              {{ systemMetrics.temperature > 70 ? 'High' : 'Normal' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="network-info" *ngIf="systemMetrics?.network">
+        <h4>Network Interfaces</h4>
+        <div class="interface-list">
+          <div class="interface-item" *ngFor="let iface of systemMetrics.network.interfaces">
+            <span class="interface-name">{{ iface.name }}</span>
+            <span class="interface-type">{{ iface.type }}</span>
+            <span class="interface-ip">{{ iface.ip }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Services Panel -->
+    <div class="panel services-panel">
+      <h3>Services</h3>
+      
+      <div class="services-list">
+        <div class="service-item" *ngFor="let service of services">
+          <div class="service-info">
+            <span class="service-name">{{ service.name }}</span>
+            <span class="service-status" [class]="getServiceStatusClass(service.status)">
+              {{ service.status }}
+            </span>
+            <span class="service-uptime" *ngIf="service.uptime">
+              Up {{ formatUptime(service.uptime) }}
+            </span>
+            <span class="service-pid" *ngIf="service.pid">
+              PID: {{ service.pid }}
+            </span>
+          </div>
+          
+          <div class="service-metrics" *ngIf="service.memory || service.cpu">
+            <span *ngIf="service.memory">Mem: {{ formatBytes(service.memory) }}</span>
+            <span *ngIf="service.cpu">CPU: {{ service.cpu }}%</span>
+          </div>
+          
+          <div class="service-actions">
+            <button 
+              class="btn btn-sm"
+              *ngIf="service.status === 'stopped'"
+              (click)="startService(service)">
+              Start
+            </button>
+            <button 
+              class="btn btn-sm"
+              *ngIf="service.status === 'running'"
+              (click)="stopService(service)">
+              Stop
+            </button>
+            <button 
+              class="btn btn-sm"
+              *ngIf="service.status === 'running'"
+              (click)="restartService(service)">
+              Restart
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- System Controls Panel -->
+    <div class="panel controls-panel">
+      <h3>System Controls</h3>
+      
+      <div class="control-group">
+        <div class="control-item">
+          <label>
+            <input 
+              type="checkbox" 
+              [(ngModel)]="isMaintenanceMode"
+              (change)="toggleMaintenanceMode()">
+            Maintenance Mode
+          </label>
+          <span class="control-description">
+            Disable user access for maintenance
+          </span>
+        </div>
+
+        <div class="control-item">
+          <label>
+            <input 
+              type="checkbox" 
+              [(ngModel)]="isDevelopmentMode"
+              (change)="toggleDevelopmentMode()">
+            Development Mode
+          </label>
+          <span class="control-description">
+            Enable debug features and verbose logging
+          </span>
+        </div>
+
+        <div class="control-item">
+          <label>
+            <input 
+              type="checkbox" 
+              [(ngModel)]="autoRefresh">
+            Auto Refresh
+          </label>
+          <span class="control-description">
+            Update metrics every {{ refreshInterval / 1000 }} seconds
+          </span>
+        </div>
+      </div>
+
+      <div class="control-actions">
+        <button class="btn btn-primary" (click)="clearCache()">
+          <i class="icon-trash"></i> Clear Cache
+        </button>
+        
+        <button class="btn btn-warning" (click)="restartSystem()">
+          <i class="icon-refresh"></i> Restart System
+        </button>
+        
+        <button class="btn btn-danger" (click)="shutdownSystem()">
+          <i class="icon-power"></i> Shutdown
+        </button>
+        
+        <button class="btn btn-danger" (click)="factoryReset()">
+          <i class="icon-reset"></i> Factory Reset
+        </button>
+      </div>
+    </div>
+
+    <!-- Logs Panel -->
+    <div class="panel logs-panel">
+      <div class="logs-header">
+        <h3>System Logs</h3>
+        
+        <div class="logs-controls">
+          <select [(ngModel)]="logLevel" (ngModelChange)="onLogLevelChange()" class="form-control">
+            <option value="all">All Levels</option>
+            <option value="info">Info</option>
+            <option value="warn">Warning</option>
+            <option value="error">Error</option>
+          </select>
+          
+          <button class="btn btn-sm" (click)="exportLogs()">
+            <i class="icon-download"></i> Export
+          </button>
+          
+          <button class="btn btn-sm" (click)="clearLogs()">
+            <i class="icon-trash"></i> Clear
+          </button>
+        </div>
+      </div>
+      
+      <div class="logs-content">
+        <div class="log-entry" *ngFor="let log of logs" [class]="getLogLevelClass(log.level)">
+          <span class="log-timestamp">{{ log.timestamp }}</span>
+          <span class="log-level">{{ log.level }}</span>
+          <span class="log-message">{{ log.message }}</span>
+          <div class="log-details" *ngIf="log.details">
+            <pre>{{ log.details | json }}</pre>
+          </div>
+        </div>
+        
+        <div class="no-logs" *ngIf="logs.length === 0">
+          No logs to display
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Message -->
+  <div class="action-message" *ngIf="isPerformingAction">
+    <div class="spinner"></div>
+    <span>{{ actionMessage }}</span>
+  </div>
+
+  <!-- Restart Confirmation Modal -->
+  <div class="modal" *ngIf="showRestartConfirm">
+    <div class="modal-content">
+      <h3>Restart System</h3>
+      <p>Are you sure you want to restart the system?</p>
+      <p class="warning">The photobooth will be unavailable during restart.</p>
+      
+      <div class="modal-actions">
+        <button class="btn btn-secondary" (click)="cancelRestart()">Cancel</button>
+        <button class="btn btn-warning" (click)="confirmRestart()">Restart</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shutdown Confirmation Modal -->
+  <div class="modal" *ngIf="showShutdownConfirm">
+    <div class="modal-content">
+      <h3>Shutdown System</h3>
+      <p>Are you sure you want to shutdown the system?</p>
+      <p class="warning">The system will need to be manually restarted.</p>
+      
+      <div class="modal-actions">
+        <button class="btn btn-secondary" (click)="cancelShutdown()">Cancel</button>
+        <button class="btn btn-danger" (click)="confirmShutdown()">Shutdown</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Factory Reset Confirmation Modal -->
+  <div class="modal" *ngIf="showFactoryResetConfirm">
+    <div class="modal-content">
+      <h3>Factory Reset</h3>
+      <p>This will reset all settings to factory defaults.</p>
+      <p class="warning">All images, settings, and data will be deleted!</p>
+      <p class="warning">This action cannot be undone!</p>
+      
+      <div class="modal-actions">
+        <button class="btn btn-secondary" (click)="cancelFactoryReset()">Cancel</button>
+        <button class="btn btn-danger" (click)="confirmFactoryReset()">Reset Everything</button>
+      </div>
+    </div>
+  </div>
+</div>

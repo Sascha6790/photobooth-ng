@@ -1,0 +1,273 @@
+<div class="gallery-management">
+  <div class="gallery-header">
+    <h2>Gallery Management</h2>
+    
+    <div class="gallery-stats" *ngIf="statistics">
+      <div class="stat-item">
+        <span class="stat-label">Total Images:</span>
+        <span class="stat-value">{{ statistics.totalImages }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Total Size:</span>
+        <span class="stat-value">{{ formatBytes(statistics.totalSize) }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Average Size:</span>
+        <span class="stat-value">{{ formatBytes(statistics.averageSize) }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="gallery-toolbar">
+    <div class="toolbar-section">
+      <button class="btn btn-secondary" (click)="toggleSelectAll()">
+        {{ selectAll ? 'Deselect All' : 'Select All' }}
+      </button>
+      
+      <span class="selection-count" *ngIf="selectedImages.length > 0">
+        {{ selectedImages.length }} selected
+      </span>
+    </div>
+
+    <div class="toolbar-section">
+      <button 
+        class="btn btn-primary" 
+        (click)="downloadSelected()"
+        [disabled]="selectedImages.length === 0">
+        <i class="icon-download"></i> Download
+      </button>
+      
+      <button 
+        class="btn btn-primary" 
+        (click)="printSelected()"
+        [disabled]="selectedImages.length === 0">
+        <i class="icon-print"></i> Print
+      </button>
+      
+      <button 
+        class="btn btn-danger" 
+        (click)="deleteSelected()"
+        [disabled]="selectedImages.length === 0">
+        <i class="icon-delete"></i> Delete
+      </button>
+    </div>
+
+    <div class="toolbar-section">
+      <button class="btn btn-warning" (click)="rebuildDatabase()">
+        <i class="icon-refresh"></i> Rebuild Database
+      </button>
+      
+      <div class="view-toggle">
+        <button 
+          class="view-btn"
+          [class.active]="viewMode === 'grid'"
+          (click)="viewMode = 'grid'">
+          <i class="icon-grid"></i>
+        </button>
+        <button 
+          class="view-btn"
+          [class.active]="viewMode === 'list'"
+          (click)="viewMode = 'list'">
+          <i class="icon-list"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="gallery-filters">
+    <div class="filter-group">
+      <label>Search:</label>
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="onFilterChange()"
+        placeholder="Search by filename..."
+        class="form-control">
+    </div>
+
+    <div class="filter-group">
+      <label>Sort By:</label>
+      <select [(ngModel)]="sortBy" (ngModelChange)="onSortChange()" class="form-control">
+        <option value="date">Date</option>
+        <option value="name">Name</option>
+        <option value="size">Size</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Order:</label>
+      <select [(ngModel)]="sortOrder" (ngModelChange)="onSortChange()" class="form-control">
+        <option value="desc">Descending</option>
+        <option value="asc">Ascending</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>From Date:</label>
+      <input 
+        type="date" 
+        [(ngModel)]="fromDate"
+        (ngModelChange)="onFilterChange()"
+        class="form-control">
+    </div>
+
+    <div class="filter-group">
+      <label>To Date:</label>
+      <input 
+        type="date" 
+        [(ngModel)]="toDate"
+        (ngModelChange)="onFilterChange()"
+        class="form-control">
+    </div>
+  </div>
+
+  <div class="gallery-content" [class.loading]="isLoading">
+    <div class="loading-overlay" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <p>Loading images...</p>
+    </div>
+
+    <!-- Grid View -->
+    <div class="image-grid" *ngIf="viewMode === 'grid' && !isLoading">
+      <div 
+        class="image-item" 
+        *ngFor="let image of images"
+        [class.selected]="image.selected"
+        (click)="toggleImageSelection(image)">
+        
+        <div class="image-thumbnail">
+          <img [src]="image.thumbnail || image.path" [alt]="image.filename">
+          <div class="image-overlay">
+            <div class="image-info">
+              <span class="image-size">{{ formatBytes(image.size) }}</span>
+              <span class="image-dimensions">{{ image.width }}x{{ image.height }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="image-details">
+          <span class="image-name">{{ image.filename }}</span>
+          <span class="image-date">{{ formatDate(image.createdAt) }}</span>
+          <span class="image-prints" *ngIf="image.printCount > 0">
+            Printed: {{ image.printCount }}x
+          </span>
+        </div>
+        
+        <div class="selection-indicator">
+          <input type="checkbox" [checked]="image.selected" (click)="$event.stopPropagation()">
+        </div>
+      </div>
+    </div>
+
+    <!-- List View -->
+    <div class="image-list" *ngIf="viewMode === 'list' && !isLoading">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>
+              <input type="checkbox" [checked]="selectAll" (change)="toggleSelectAll()">
+            </th>
+            <th>Thumbnail</th>
+            <th>Filename</th>
+            <th>Size</th>
+            <th>Dimensions</th>
+            <th>Date</th>
+            <th>Prints</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr 
+            *ngFor="let image of images"
+            [class.selected]="image.selected"
+            (click)="toggleImageSelection(image)">
+            
+            <td>
+              <input 
+                type="checkbox" 
+                [checked]="image.selected" 
+                (click)="$event.stopPropagation()">
+            </td>
+            <td class="thumbnail-cell">
+              <img [src]="image.thumbnail || image.path" [alt]="image.filename">
+            </td>
+            <td>{{ image.filename }}</td>
+            <td>{{ formatBytes(image.size) }}</td>
+            <td>{{ image.width }}x{{ image.height }}</td>
+            <td>{{ formatDate(image.createdAt) }}</td>
+            <td>{{ image.printCount }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- No Results -->
+    <div class="no-results" *ngIf="images.length === 0 && !isLoading">
+      <i class="icon-image-off"></i>
+      <p>No images found</p>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" *ngIf="totalPages > 1">
+    <button 
+      class="btn btn-sm"
+      (click)="previousPage()"
+      [disabled]="currentPage === 1">
+      Previous
+    </button>
+    
+    <div class="page-numbers">
+      <button 
+        *ngFor="let page of [].constructor(totalPages); let i = index"
+        class="page-btn"
+        [class.active]="currentPage === i + 1"
+        (click)="goToPage(i + 1)"
+        [disabled]="currentPage === i + 1">
+        {{ i + 1 }}
+      </button>
+    </div>
+    
+    <button 
+      class="btn btn-sm"
+      (click)="nextPage()"
+      [disabled]="currentPage === totalPages">
+      Next
+    </button>
+    
+    <span class="page-info">
+      Page {{ currentPage }} of {{ totalPages }} ({{ totalItems }} items)
+    </span>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal" *ngIf="showDeleteConfirm">
+    <div class="modal-content">
+      <h3>Confirm Delete</h3>
+      <p>Are you sure you want to delete {{ selectedImages.length }} selected image(s)?</p>
+      <p class="warning">This action cannot be undone!</p>
+      
+      <div class="modal-actions">
+        <button class="btn btn-secondary" (click)="cancelDelete()">Cancel</button>
+        <button class="btn btn-danger" (click)="confirmDelete()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rebuild Confirmation Modal -->
+  <div class="modal" *ngIf="showRebuildConfirm">
+    <div class="modal-content">
+      <h3>Rebuild Database</h3>
+      <p>This will scan the filesystem and rebuild the image database.</p>
+      <p>This may take several minutes depending on the number of images.</p>
+      
+      <div class="progress-bar" *ngIf="rebuildProgress > 0">
+        <div class="progress-fill" [style.width.%]="rebuildProgress"></div>
+      </div>
+      
+      <div class="modal-actions">
+        <button class="btn btn-secondary" (click)="cancelRebuild()">Cancel</button>
+        <button class="btn btn-primary" (click)="confirmRebuild()">Start Rebuild</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,10 @@
+<div class="chroma-canvas-container">
+  <video #video autoplay playsinline muted [hidden]="true"></video>
+  <canvas #canvas class="chroma-canvas"></canvas>
+  
+  <div class="chroma-controls">
+    <button class="capture-btn" (click)="capture()">
+      📷 Capture
+    </button>
+  </div>
+</div>

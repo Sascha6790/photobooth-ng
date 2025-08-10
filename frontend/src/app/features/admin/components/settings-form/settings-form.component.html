@@ -1,0 +1,465 @@
+<div class="settings-form-container">
+  <div class="settings-header">
+    <h2>Settings</h2>
+    <div class="settings-actions">
+      <button class="btn btn-secondary" (click)="exportSettings()">
+        Export
+      </button>
+      <label class="btn btn-secondary">
+        Import
+        <input type="file" accept=".json" (change)="importSettings($event)" hidden>
+      </label>
+      <button 
+        class="btn btn-primary" 
+        [disabled]="!hasChanges || isSaving"
+        (click)="saveSettings()">
+        {{ isSaving ? 'Saving...' : 'Save Changes' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="settings-tabs">
+    <button 
+      *ngFor="let tab of tabs"
+      class="tab-button"
+      [class.active]="activeTab === tab.id"
+      (click)="setActiveTab(tab.id)">
+      <span class="tab-icon">{{ tab.icon }}</span>
+      <span class="tab-label">{{ tab.label }}</span>
+    </button>
+  </div>
+
+  <div class="settings-content" [formGroup]="settingsForm">
+    <div class="loading-overlay" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <p>Loading settings...</p>
+    </div>
+
+    <!-- General Settings -->
+    <div class="settings-panel" *ngIf="activeTab === 'general'" [formGroup]="getFormGroup('general')">
+      <h3>General Settings</h3>
+      
+      <div class="form-group">
+        <label for="appTitle">Application Title</label>
+        <input 
+          id="appTitle" 
+          type="text" 
+          formControlName="appTitle"
+          class="form-control"
+          [class.is-invalid]="isFieldInvalid('general', 'appTitle')">
+        <span class="error-message" *ngIf="isFieldInvalid('general', 'appTitle')">
+          {{ getFieldError('general', 'appTitle') }}
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="language">Language</label>
+        <select id="language" formControlName="language" class="form-control">
+          <option value="en">English</option>
+          <option value="de">Deutsch</option>
+          <option value="fr">Français</option>
+          <option value="es">Español</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="countdown">Countdown Timer (seconds)</label>
+        <input 
+          id="countdown" 
+          type="number" 
+          formControlName="countdown"
+          class="form-control"
+          [class.is-invalid]="isFieldInvalid('general', 'countdown')">
+        <span class="error-message" *ngIf="isFieldInvalid('general', 'countdown')">
+          {{ getFieldError('general', 'countdown') }}
+        </span>
+      </div>
+
+      <div class="form-group checkbox">
+        <label>
+          <input type="checkbox" formControlName="enableSound">
+          Enable Sound Effects
+        </label>
+      </div>
+
+      <div class="form-group checkbox">
+        <label>
+          <input type="checkbox" formControlName="enableFlash">
+          Enable Camera Flash Effect
+        </label>
+      </div>
+    </div>
+
+    <!-- Camera Settings -->
+    <div class="settings-panel" *ngIf="activeTab === 'camera'" [formGroup]="getFormGroup('camera')">
+      <h3>Camera Settings</h3>
+
+      <div class="form-group">
+        <label for="captureMode">Capture Mode</label>
+        <select id="captureMode" formControlName="captureMode" class="form-control">
+          <option value="webcam">Webcam</option>
+          <option value="gphoto2">DSLR (gphoto2)</option>
+          <option value="mock">Mock (Development)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="resolution">Resolution</label>
+        <select id="resolution" formControlName="resolution" class="form-control">
+          <option value="640x480">640x480</option>
+          <option value="1280x720">1280x720 (HD)</option>
+          <option value="1920x1080">1920x1080 (Full HD)</option>
+          <option value="2560x1440">2560x1440 (2K)</option>
+          <option value="3840x2160">3840x2160 (4K)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="quality">Image Quality (%)</label>
+        <input 
+          id="quality" 
+          type="number" 
+          formControlName="quality"
+          class="form-control"
+          [class.is-invalid]="isFieldInvalid('camera', 'quality')">
+        <span class="error-message" *ngIf="isFieldInvalid('camera', 'quality')">
+          {{ getFieldError('camera', 'quality') }}
+        </span>
+      </div>
+
+      <div class="form-group checkbox">
+        <label>
+          <input type="checkbox" formControlName="flipHorizontal">
+          Flip Image Horizontally (Mirror)
+        </label>
+      </div>
+    </div>
+
+    <!-- Gallery Settings -->
+    <div class="settings-panel" *ngIf="activeTab === 'gallery'" [formGroup]="getFormGroup('gallery')">
+      <h3>Gallery Settings</h3>
+
+      <div class="form-group checkbox">
+        <label>
+          <input type="checkbox" formControlName="enabled">
+          Enable Gallery
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label for="itemsPerPage">Items Per Page</label>
+        <input 
+          id="itemsPerPage" 
+          type="number" 
+          formControlName="itemsPerPage"
+          class="form-control"
+          [class.is-invalid]="isFieldInvalid('gallery', 'itemsPerPage')">
+        <span class="error-message" *ngIf="isFieldInvalid('gallery', 'itemsPerPage')">
+          {{ getFieldError('gallery', 'itemsPerPage') }}
+        </span>
+      </div>
+
+      <div class="form-group checkbox">
+        <label>
+          <input type="checkbox" formControlName="allowDownload">
+          Allow Download
+        </label>
+      </div>
+
+      <div class="form-group checkbox">
+        <label>
+          <input type="checkbox" formControlName="allowSharing">
+          Allow Sharing
+        </label>
+      </div>
+
+      <div class="form-group checkbox">
+        <label>
+          <input type="checkbox" formControlName="autoRefresh">
+          Auto Refresh Gallery
+        </label>
+      </div>
+
+      <div class="form-group" *ngIf="getFormGroup('gallery').get('autoRefresh')?.value">
+        <label for="refreshInterval">Refresh Interval (seconds)</label>
+        <input 
+          id="refreshInterval" 
+          type="number" 
+          formControlName="refreshInterval"
+          class="form-control">
+      </div>
+    </div>
+
+    <!-- Printer Settings -->
+    <div class="settings-panel" *ngIf="activeTab === 'printer'" [formGroup]="getFormGroup('printer')">
+      <h3>Printer Settings</h3>
+
+      <div class="form-group checkbox">
+        <label>
+          <input type="checkbox" formControlName="enabled">
+          Enable Printing
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label for="printerName">Printer Name</label>
+        <input 
+          id="printerName" 
+          type="text" 
+          formControlName="printerName"
+          class="form-control"
+          placeholder="Leave empty for default printer">
+      </div>
+
+      <div class="form-group">
+        <label for="paperSize">Paper Size</label>
+        <select id="paperSize" formControlName="paperSize" class="form-control">
+          <option value="4x6">4x6 inches</option>
+          <option value="5x7">5x7 inches</option>
+          <option value="A4">A4</option>
+          <option value="A5">A5</option>
+          <option value="Letter">Letter</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="copies">Default Copies</label>
+        <input 
+          id="copies" 
+          type="number" 
+          formControlName="copies"
+          class="form-control"
+          [class.is-invalid]="isFieldInvalid('printer', 'copies')">
+        <span class="error-message" *ngIf="isFieldInvalid('printer', 'copies')">
+          {{ getFieldError('printer', 'copies') }}
+        </span>
+      </div>
+
+      <div class="form-group checkbox">
+        <label>
+          <input type="checkbox" formControlName="borderless">
+          Borderless Printing
+        </label>
+      </div>
+
+      <div class="form-group checkbox">
+        <label>
+          <input type="checkbox" formControlName="autoprint">
+          Auto Print After Capture
+        </label>
+      </div>
+    </div>
+
+    <!-- Effects Settings -->
+    <div class="settings-panel" *ngIf="activeTab === 'effects'" [formGroup]="getFormGroup('effects')">
+      <h3>Effects Settings</h3>
+
+      <div class="form-group checkbox">
+        <label>
+          <input type="checkbox" formControlName="enableFilters">
+          Enable Filters
+        </label>
+      </div>
+
+      <div class="form-group checkbox">
+        <label>
+          <input type="checkbox" formControlName="enableFrames">
+          Enable Frames
+        </label>
+      </div>
+
+      <div class="form-group checkbox">
+        <label>
+          <input type="checkbox" formControlName="enableChromaKey">
+          Enable Chroma Key (Green Screen)
+        </label>
+      </div>
+
+      <div class="form-group" *ngIf="getFormGroup('effects').get('enableChromaKey')?.value">
+        <label for="chromaKeyColor">Chroma Key Color</label>
+        <input 
+          id="chromaKeyColor" 
+          type="color" 
+          formControlName="chromaKeyColor"
+          class="form-control color-input">
+      </div>
+
+      <div class="form-group" *ngIf="getFormGroup('effects').get('enableChromaKey')?.value">
+        <label for="chromaKeyTolerance">Chroma Key Tolerance</label>
+        <input 
+          id="chromaKeyTolerance" 
+          type="range" 
+          formControlName="chromaKeyTolerance"
+          class="form-control-range"
+          min="0" 
+          max="100">
+        <span class="range-value">{{ getFormGroup('effects').get('chromaKeyTolerance')?.value }}</span>
+      </div>
+    </div>
+
+    <!-- Email Settings -->
+    <div class="settings-panel" *ngIf="activeTab === 'email'" [formGroup]="getFormGroup('email')">
+      <h3>Email Settings</h3>
+
+      <div class="form-group checkbox">
+        <label>
+          <input type="checkbox" formControlName="enabled">
+          Enable Email Sending
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label for="smtpHost">SMTP Host</label>
+        <input 
+          id="smtpHost" 
+          type="text" 
+          formControlName="smtpHost"
+          class="form-control"
+          placeholder="smtp.example.com">
+      </div>
+
+      <div class="form-group">
+        <label for="smtpPort">SMTP Port</label>
+        <input 
+          id="smtpPort" 
+          type="number" 
+          formControlName="smtpPort"
+          class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="smtpUser">SMTP Username</label>
+        <input 
+          id="smtpUser" 
+          type="text" 
+          formControlName="smtpUser"
+          class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="smtpPassword">SMTP Password</label>
+        <input 
+          id="smtpPassword" 
+          type="password" 
+          formControlName="smtpPassword"
+          class="form-control">
+      </div>
+
+      <div class="form-group checkbox">
+        <label>
+          <input type="checkbox" formControlName="smtpSecure">
+          Use Secure Connection (TLS/SSL)
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label for="fromAddress">From Email Address</label>
+        <input 
+          id="fromAddress" 
+          type="email" 
+          formControlName="fromAddress"
+          class="form-control"
+          [class.is-invalid]="isFieldInvalid('email', 'fromAddress')">
+        <span class="error-message" *ngIf="isFieldInvalid('email', 'fromAddress')">
+          {{ getFieldError('email', 'fromAddress') }}
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="fromName">From Name</label>
+        <input 
+          id="fromName" 
+          type="text" 
+          formControlName="fromName"
+          class="form-control">
+      </div>
+    </div>
+
+    <!-- Advanced Settings -->
+    <div class="settings-panel" *ngIf="activeTab === 'advanced'" [formGroup]="getFormGroup('advanced')">
+      <h3>Advanced Settings</h3>
+
+      <div class="form-group checkbox">
+        <label>
+          <input type="checkbox" formControlName="debugMode">
+          Enable Debug Mode
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label for="logLevel">Log Level</label>
+        <select id="logLevel" formControlName="logLevel" class="form-control">
+          <option value="error">Error</option>
+          <option value="warn">Warning</option>
+          <option value="info">Info</option>
+          <option value="debug">Debug</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="storagePath">Storage Path</label>
+        <input 
+          id="storagePath" 
+          type="text" 
+          formControlName="storagePath"
+          class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="maxStorageSize">Max Storage Size (GB)</label>
+        <input 
+          id="maxStorageSize" 
+          type="number" 
+          formControlName="maxStorageSize"
+          class="form-control">
+      </div>
+
+      <div class="form-group checkbox">
+        <label>
+          <input type="checkbox" formControlName="backupEnabled">
+          Enable Automatic Backups
+        </label>
+      </div>
+
+      <div class="form-group" *ngIf="getFormGroup('advanced').get('backupEnabled')?.value">
+        <label for="backupInterval">Backup Interval (hours)</label>
+        <input 
+          id="backupInterval" 
+          type="number" 
+          formControlName="backupInterval"
+          class="form-control">
+      </div>
+
+      <div class="form-group checkbox">
+        <label>
+          <input type="checkbox" formControlName="cleanupOldFiles">
+          Auto-cleanup Old Files
+        </label>
+      </div>
+
+      <div class="form-group" *ngIf="getFormGroup('advanced').get('cleanupOldFiles')?.value">
+        <label for="cleanupAge">Delete Files Older Than (days)</label>
+        <input 
+          id="cleanupAge" 
+          type="number" 
+          formControlName="cleanupAge"
+          class="form-control">
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-footer" *ngIf="hasChanges">
+    <p class="unsaved-changes">You have unsaved changes</p>
+    <div class="footer-actions">
+      <button class="btn btn-secondary" (click)="resetForm()">
+        Reset
+      </button>
+      <button 
+        class="btn btn-primary" 
+        [disabled]="!hasChanges || isSaving"
+        (click)="saveSettings()">
+        {{ isSaving ? 'Saving...' : 'Save Changes' }}
+      </button>
+    </div>
+  </div>
+</div>

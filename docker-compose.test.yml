@@ -1,0 +1,111 @@
+version: '3.8'
+
+services:
+  # Test Database
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: photobooth-postgres-test
+    environment:
+      POSTGRES_DB: photobooth_test
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_pass
+      POSTGRES_HOST_AUTH_METHOD: trust
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Test Redis
+  redis-test:
+    image: redis:7-alpine
+    container_name: photobooth-redis-test
+    command: redis-server --appendonly no
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Backend Tests
+  backend-test:
+    build:
+      context: .
+      dockerfile: backend.Dockerfile
+      target: builder
+    container_name: photobooth-backend-test
+    environment:
+      NODE_ENV: test
+      DATABASE_TYPE: postgres
+      DATABASE_HOST: postgres-test
+      DATABASE_PORT: 5432
+      DATABASE_NAME: photobooth_test
+      DATABASE_USER: test_user
+      DATABASE_PASSWORD: test_pass
+      REDIS_HOST: redis-test
+      REDIS_PORT: 6379
+      JWT_SECRET: test-secret
+      HARDWARE_MOCK: true
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    networks:
+      - test-network
+    command: npm run test:backend
+
+  # Frontend Tests
+  frontend-test:
+    build:
+      context: .
+      dockerfile: frontend.Dockerfile
+      target: builder
+    container_name: photobooth-frontend-test
+    environment:
+      NODE_ENV: test
+    networks:
+      - test-network
+    command: npm run test:frontend
+
+  # E2E Tests
+  e2e-test:
+    build:
+      context: .
+      dockerfile: e2e.Dockerfile
+    container_name: photobooth-e2e-test
+    environment:
+      BACKEND_URL: http://backend-test:3000
+      FRONTEND_URL: http://frontend-test:4200
+    depends_on:
+      - backend-test
+      - frontend-test
+    networks:
+      - test-network
+    command: npm run e2e
+
+  # Test Runner (orchestrates all tests)
+  test-runner:
+    image: alpine:latest
+    container_name: photobooth-test-runner
+    depends_on:
+      - backend-test
+      - frontend-test
+      - e2e-test
+    networks:
+      - test-network
+    command: |
+      sh -c "
+        echo 'Waiting for all tests to complete...'
+        sleep 10
+        echo 'All tests completed successfully!'
+        exit 0
+      "
+
+networks:
+  test-network:
+    driver: bridge

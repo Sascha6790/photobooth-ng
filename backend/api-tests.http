@@ -1,0 +1,395 @@
+### Photobooth Backend API Tests
+### Diese Datei kann mit IntelliJ IDEA's HTTP Client ausgeführt werden
+### Dokumentation: https://www.jetbrains.com/help/idea/http-client-in-product-code-editor.html
+
+### Variables (kann in http-client.env.json angepasst werden)
+@baseUrl = http://localhost:3000
+@contentType = application/json
+
+### ============================================
+### SETTINGS API
+### ============================================
+
+### Get current settings
+GET {{baseUrl}}/api/settings
+Accept: application/json
+
+### Update settings (example)
+PUT {{baseUrl}}/api/settings
+Content-Type: {{contentType}}
+
+{
+  "camera": {
+    "countdown": 3,
+    "previewFromCam": true
+  },
+  "print": {
+    "enabled": true,
+    "printerName": "Canon_SELPHY"
+  }
+}
+
+### Get specific settings section
+GET {{baseUrl}}/api/settings/section/camera
+Accept: application/json
+
+### Update specific settings section
+PUT {{baseUrl}}/api/settings/section/camera
+Content-Type: {{contentType}}
+
+{
+  "mode": "webcam",
+  "countdown": 5
+}
+
+### Export settings
+POST {{baseUrl}}/api/settings/export
+Accept: application/json
+
+### Import settings
+POST {{baseUrl}}/api/settings/import
+Content-Type: {{contentType}}
+
+{
+  "camera": {
+    "mode": "mock",
+    "countdown": 10
+  }
+}
+
+### ============================================
+### CAPTURE API
+### ============================================
+
+### Capture a photo
+POST {{baseUrl}}/api/capture
+Content-Type: {{contentType}}
+
+{
+  "mode": "photo"
+}
+
+### Capture with filter
+POST {{baseUrl}}/api/capture
+Content-Type: {{contentType}}
+
+{
+  "mode": "photo",
+  "filter": "grayscale"
+}
+
+### Capture with frame
+POST {{baseUrl}}/api/capture
+Content-Type: {{contentType}}
+
+{
+  "mode": "photo",
+  "frame": "frame_bark"
+}
+
+### Capture for collage
+POST {{baseUrl}}/api/capture
+Content-Type: {{contentType}}
+
+{
+  "mode": "collage",
+  "collageLayout": "2x2",
+  "collageIndex": 0
+}
+
+### Capture with chromakey
+POST {{baseUrl}}/api/capture
+Content-Type: {{contentType}}
+
+{
+  "mode": "chromakey",
+  "chromakeyBackground": "beach.jpg"
+}
+
+### Start countdown
+POST {{baseUrl}}/api/capture/countdown/start
+Content-Type: {{contentType}}
+
+{
+  "seconds": 5
+}
+
+### Cancel countdown
+POST {{baseUrl}}/api/capture/countdown/cancel
+Content-Type: {{contentType}}
+
+### Get camera preview
+GET {{baseUrl}}/api/capture/preview?width=1280&height=720&format=jpeg
+Accept: image/jpeg
+
+### Upload image (multipart form)
+POST {{baseUrl}}/api/capture/upload
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+
+------WebKitFormBoundary
+Content-Disposition: form-data; name="image"; filename="test.jpg"
+Content-Type: image/jpeg
+
+< ./test-image.jpg
+------WebKitFormBoundary
+Content-Disposition: form-data; name="mode"
+
+photo
+------WebKitFormBoundary--
+
+### ============================================
+### GALLERY API
+### ============================================
+
+### Get gallery with default pagination
+GET {{baseUrl}}/api/gallery
+Accept: application/json
+
+### Get gallery with custom pagination
+GET {{baseUrl}}/api/gallery?page=1&limit=10&sortBy=date&sortOrder=desc
+Accept: application/json
+
+### Get gallery with date filter
+GET {{baseUrl}}/api/gallery?fromDate=2025-01-01&toDate=2025-12-31
+Accept: application/json
+
+### Get latest images
+GET {{baseUrl}}/api/gallery/latest?limit=5
+Accept: application/json
+
+### Get random images
+GET {{baseUrl}}/api/gallery/random?count=3
+Accept: application/json
+
+### Get gallery statistics
+GET {{baseUrl}}/api/gallery/stats
+Accept: application/json
+
+### Get specific image by ID
+GET {{baseUrl}}/api/gallery/photo_1234567890
+Accept: application/json
+
+### Delete image by ID
+DELETE {{baseUrl}}/api/gallery/photo_1234567890?deleteFromRemote=false
+Accept: application/json
+
+### Bulk delete images
+DELETE {{baseUrl}}/api/gallery/bulk
+Content-Type: {{contentType}}
+
+{
+  "ids": ["photo_123", "photo_456", "photo_789"],
+  "deleteFromRemote": false
+}
+
+### Rebuild gallery database
+POST {{baseUrl}}/api/gallery/rebuild
+Accept: application/json
+
+### ============================================
+### PRINT API
+### ============================================
+
+### Print an image
+POST {{baseUrl}}/api/print
+Content-Type: {{contentType}}
+
+{
+  "imageId": "photo_1234567890",
+  "copies": 2
+}
+
+### Get print queue
+GET {{baseUrl}}/api/print/queue
+Accept: application/json
+
+### ============================================
+### QR CODE API
+### ============================================
+
+### Generate QR code for image
+GET {{baseUrl}}/api/qrcode?imageId=photo_1234567890
+Accept: application/json
+
+### ============================================
+### CHROMAKEYING API
+### ============================================
+
+### Apply chromakey effect
+POST {{baseUrl}}/api/chromakeying/apply
+Content-Type: {{contentType}}
+
+{
+  "imageId": "photo_1234567890",
+  "background": "beach.jpg"
+}
+
+### Get available backgrounds
+GET {{baseUrl}}/api/chromakeying/backgrounds
+Accept: application/json
+
+### ============================================
+### ADMIN API
+### ============================================
+
+### Admin login with password
+POST {{baseUrl}}/api/admin/login
+Content-Type: {{contentType}}
+
+{
+  "password": "admin123"
+}
+
+### Admin login with PIN
+POST {{baseUrl}}/api/admin/login
+Content-Type: {{contentType}}
+
+{
+  "pin": "1234"
+}
+
+### Admin logout
+POST {{baseUrl}}/api/admin/logout
+Accept: application/json
+
+### Get system status
+GET {{baseUrl}}/api/admin/status
+Accept: application/json
+
+### Shutdown system
+POST {{baseUrl}}/api/admin/shutdown
+Content-Type: {{contentType}}
+
+### Restart system
+POST {{baseUrl}}/api/admin/restart
+Content-Type: {{contentType}}
+
+### ============================================
+### HARDWARE API
+### ============================================
+
+### Get hardware status
+GET {{baseUrl}}/api/hardware/status
+Accept: application/json
+
+### Capture photo via hardware API
+POST {{baseUrl}}/api/hardware/camera/capture
+Content-Type: {{contentType}}
+
+{
+  "countdown": 3,
+  "sound": true,
+  "flash": true,
+  "saveToGallery": true
+}
+
+### Capture multiple photos
+POST {{baseUrl}}/api/hardware/camera/capture-multiple
+Content-Type: {{contentType}}
+
+{
+  "count": 4,
+  "interval": 2000,
+  "countdown": 3
+}
+
+### Start video recording
+POST {{baseUrl}}/api/hardware/camera/video/start
+Content-Type: {{contentType}}
+
+{
+  "duration": 10,
+  "sound": true
+}
+
+### Stop video recording
+POST {{baseUrl}}/api/hardware/camera/video/stop
+Accept: application/json
+
+### Get camera settings
+GET {{baseUrl}}/api/hardware/camera/settings
+Accept: application/json
+
+### Update camera settings
+POST {{baseUrl}}/api/hardware/camera/settings
+Content-Type: {{contentType}}
+
+{
+  "iso": 400,
+  "aperture": "f/2.8",
+  "shutterSpeed": "1/250",
+  "whiteBalance": "daylight",
+  "focusMode": "auto",
+  "imageFormat": "jpeg",
+  "imageQuality": "fine"
+}
+
+### Switch camera strategy
+POST {{baseUrl}}/api/hardware/camera/switch-strategy
+Content-Type: {{contentType}}
+
+{
+  "strategy": "webcam"
+}
+
+### Register GPIO button
+POST {{baseUrl}}/api/hardware/gpio/button/register
+Content-Type: {{contentType}}
+
+{
+  "name": "custom",
+  "pin": 26,
+  "pullUp": true,
+  "debounceTimeout": 200,
+  "holdTime": 2000
+}
+
+### Register GPIO LED
+POST {{baseUrl}}/api/hardware/gpio/led/register
+Content-Type: {{contentType}}
+
+{
+  "name": "custom",
+  "pin": 13
+}
+
+### Set LED state
+POST {{baseUrl}}/api/hardware/gpio/led/status/set
+Content-Type: {{contentType}}
+
+{
+  "value": 1
+}
+
+### Toggle LED
+POST {{baseUrl}}/api/hardware/gpio/led/status/toggle
+Accept: application/json
+
+### Blink LED
+POST {{baseUrl}}/api/hardware/gpio/led/status/blink
+Content-Type: {{contentType}}
+
+{
+  "times": 5,
+  "interval": 200
+}
+
+### Get button status
+GET {{baseUrl}}/api/hardware/gpio/button/capture
+Accept: application/json
+
+### Test hardware connection
+POST {{baseUrl}}/api/hardware/test-connection
+Accept: application/json
+
+### ============================================
+### HEALTH & INFO
+### ============================================
+
+### Health check (basic)
+GET {{baseUrl}}/
+Accept: application/json
+
+### Swagger Documentation
+GET {{baseUrl}}/docs
+Accept: text/html

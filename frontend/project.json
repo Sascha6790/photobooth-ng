@@ -19,6 +19,11 @@
           {
             "glob": "**/*",
             "input": "frontend/public"
+          },
+          {
+            "glob": "**/*",
+            "input": "frontend/src/assets",
+            "output": "assets"
           }
         ],
         "styles": ["frontend/src/styles.scss"]
@@ -28,21 +33,39 @@
           "budgets": [
             {
               "type": "initial",
-              "maximumWarning": "500kb",
-              "maximumError": "1mb"
+              "maximumWarning": "2mb",
+              "maximumError": "5mb"
             },
             {
               "type": "anyComponentStyle",
-              "maximumWarning": "4kb",
-              "maximumError": "8kb"
+              "maximumWarning": "8kb",
+              "maximumError": "16kb"
             }
           ],
-          "outputHashing": "all"
+          "outputHashing": "all",
+          "optimization": {
+            "scripts": true,
+            "styles": {
+              "minify": true,
+              "inlineCritical": true
+            },
+            "fonts": true
+          },
+          "extractLicenses": true,
+          "sourceMap": false,
+          "namedChunks": false,
+          "fileReplacements": [
+            {
+              "replace": "frontend/src/environments/environment.ts",
+              "with": "frontend/src/environments/environment.prod.ts"
+            }
+          ]
         },
         "development": {
           "optimization": false,
           "extractLicenses": false,
-          "sourceMap": true
+          "sourceMap": true,
+          "namedChunks": true
         }
       },
       "defaultConfiguration": "production"

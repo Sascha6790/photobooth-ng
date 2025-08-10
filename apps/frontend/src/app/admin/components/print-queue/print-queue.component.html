@@ -1,0 +1,384 @@
+<div class="print-queue">
+  <div class="queue-header">
+    <h2>Print Queue Management</h2>
+    
+    <div class="header-stats" *ngIf="statistics">
+      <div class="stat-item">
+        <span class="stat-value">{{ statistics.totalJobs }}</span>
+        <span class="stat-label">Total Jobs</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value">{{ statistics.todayJobs }}</span>
+        <span class="stat-label">Today</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value">{{ statistics.completedJobs }}</span>
+        <span class="stat-label">Completed</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value">{{ statistics.failedJobs }}</span>
+        <span class="stat-label">Failed</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="queue-toolbar">
+    <div class="toolbar-section">
+      <button class="btn btn-primary" (click)="pauseQueue()">
+        <i class="icon-pause"></i> Pause Queue
+      </button>
+      
+      <button class="btn btn-success" (click)="resumeQueue()">
+        <i class="icon-play"></i> Resume Queue
+      </button>
+      
+      <button class="btn btn-warning" (click)="clearQueue()">
+        <i class="icon-trash"></i> Clear Queue
+      </button>
+    </div>
+
+    <div class="toolbar-section">
+      <label class="checkbox-label">
+        <input type="checkbox" [(ngModel)]="autoRefresh">
+        Auto Refresh
+      </label>
+      
+      <button class="btn btn-secondary" (click)="showBulkActions = !showBulkActions">
+        <i class="icon-menu"></i> Bulk Actions
+      </button>
+      
+      <button class="btn btn-secondary" (click)="showPrinterSettings = !showPrinterSettings">
+        <i class="icon-printer"></i> Printers
+      </button>
+    </div>
+  </div>
+
+  <div class="bulk-actions-bar" *ngIf="showBulkActions">
+    <label class="checkbox-label">
+      <input type="checkbox" [(ngModel)]="selectAll" (change)="toggleSelectAll()">
+      Select All
+    </label>
+    
+    <span class="selection-count" *ngIf="selectedJobs.length > 0">
+      {{ selectedJobs.length }} selected
+    </span>
+    
+    <select [(ngModel)]="bulkAction" class="form-control">
+      <option value="print">Print Selected</option>
+      <option value="cancel">Cancel Selected</option>
+      <option value="delete">Delete Selected</option>
+      <option value="priority">Change Priority</option>
+    </select>
+    
+    <button 
+      class="btn btn-primary"
+      [disabled]="selectedJobs.length === 0"
+      (click)="executeBulkAction()">
+      Execute
+    </button>
+  </div>
+
+  <div class="queue-filters">
+    <div class="filter-group">
+      <label>Status:</label>
+      <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()" class="form-control">
+        <option value="all">All</option>
+        <option value="pending">Pending</option>
+        <option value="printing">Printing</option>
+        <option value="completed">Completed</option>
+        <option value="failed">Failed</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Period:</label>
+      <select [(ngModel)]="dateFilter" (ngModelChange)="onFilterChange()" class="form-control">
+        <option value="all">All Time</option>
+        <option value="today">Today</option>
+        <option value="week">This Week</option>
+        <option value="month">This Month</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Search:</label>
+      <input 
+        type="text"
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="onFilterChange()"
+        placeholder="Search by user or ID..."
+        class="form-control">
+    </div>
+  </div>
+
+  <div class="queue-container">
+    <!-- Printers Panel -->
+    <div class="printers-panel" *ngIf="showPrinterSettings">
+      <h3>Available Printers</h3>
+      
+      <div class="printer-list">
+        <div 
+          *ngFor="let printer of printers"
+          class="printer-item"
+          [class.selected]="selectedPrinter?.name === printer.name"
+          [class]="getPrinterStatusClass(printer.status)"
+          (click)="selectedPrinter = printer">
+          
+          <div class="printer-header">
+            <i class="icon-printer"></i>
+            <span class="printer-name">{{ printer.name }}</span>
+            <span class="default-badge" *ngIf="printer.isDefault">Default</span>
+          </div>
+          
+          <div class="printer-status">
+            <span class="status-indicator" [class]="getPrinterStatusClass(printer.status)">
+              {{ printer.status }}
+            </span>
+            <span class="queue-count" *ngIf="printer.queueLength > 0">
+              {{ printer.queueLength }} jobs
+            </span>
+          </div>
+          
+          <div class="printer-info" *ngIf="printer.currentJob">
+            <span>Current: {{ printer.currentJob }}</span>
+          </div>
+          
+          <div class="printer-capabilities" *ngIf="selectedPrinter?.name === printer.name">
+            <p>Paper Sizes: {{ printer.capabilities.paperSizes.join(', ') }}</p>
+            <p>Max Copies: {{ printer.capabilities.maxCopies }}</p>
+            
+            <button class="btn btn-sm" (click)="testPrint(printer)">
+              <i class="icon-test"></i> Print Test Page
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Print Jobs List -->
+    <div class="jobs-list">
+      <div class="jobs-table">
+        <div class="table-header">
+          <div class="col-checkbox" *ngIf="showBulkActions"></div>
+          <div class="col-id">ID</div>
+          <div class="col-image">Image</div>
+          <div class="col-status">Status</div>
+          <div class="col-priority">Priority</div>
+          <div class="col-printer">Printer</div>
+          <div class="col-user">User</div>
+          <div class="col-created">Created</div>
+          <div class="col-duration">Duration</div>
+          <div class="col-actions">Actions</div>
+        </div>
+
+        <div 
+          *ngFor="let job of printJobs"
+          class="table-row"
+          [class.selected]="isJobSelected(job)"
+          [class]="getStatusClass(job.status)">
+          
+          <div class="col-checkbox" *ngIf="showBulkActions">
+            <input 
+              type="checkbox"
+              [checked]="isJobSelected(job)"
+              (change)="selectJob(job)">
+          </div>
+          
+          <div class="col-id" (click)="showJobDetails = job">
+            {{ job.id.substring(0, 8) }}...
+          </div>
+          
+          <div class="col-image">
+            <img 
+              [src]="job.thumbnail || job.imagePath" 
+              [alt]="job.imageId"
+              class="job-thumbnail">
+          </div>
+          
+          <div class="col-status">
+            <span class="status-badge" [class]="getStatusClass(job.status)">
+              {{ job.status }}
+              <span class="progress-indicator" *ngIf="job.status === 'printing' && job.progress">
+                ({{ job.progress }}%)
+              </span>
+            </span>
+          </div>
+          
+          <div class="col-priority">
+            <select 
+              [(ngModel)]="job.priority"
+              (ngModelChange)="changePriority(job, $event)"
+              class="priority-select"
+              [disabled]="job.status === 'completed' || job.status === 'cancelled'">
+              <option *ngFor="let i of [0,1,2,3,4,5,6,7,8,9,10]" [value]="i">{{ i }}</option>
+            </select>
+          </div>
+          
+          <div class="col-printer">{{ job.printerName }}</div>
+          
+          <div class="col-user">
+            {{ job.userName || job.userId || 'Anonymous' }}
+          </div>
+          
+          <div class="col-created">{{ formatDate(job.createdAt) }}</div>
+          
+          <div class="col-duration">
+            <span *ngIf="job.startedAt">
+              {{ formatDuration(job.startedAt, job.completedAt) }}
+            </span>
+            <span *ngIf="!job.startedAt">-</span>
+          </div>
+          
+          <div class="col-actions">
+            <button 
+              class="btn-icon"
+              *ngIf="job.status === 'pending' || job.status === 'failed'"
+              (click)="printJob(job)"
+              title="Print">
+              <i class="icon-print"></i>
+            </button>
+            
+            <button 
+              class="btn-icon"
+              *ngIf="job.status === 'completed'"
+              (click)="reprintJob(job)"
+              title="Reprint">
+              <i class="icon-refresh"></i>
+            </button>
+            
+            <button 
+              class="btn-icon"
+              *ngIf="job.status !== 'completed' && job.status !== 'cancelled'"
+              (click)="cancelJob(job)"
+              title="Cancel">
+              <i class="icon-cancel"></i>
+            </button>
+            
+            <button 
+              class="btn-icon"
+              (click)="deleteJob(job)"
+              title="Delete">
+              <i class="icon-delete"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="no-jobs" *ngIf="printJobs.length === 0 && !isLoading">
+          <i class="icon-print-off"></i>
+          <p>No print jobs in queue</p>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div class="loading-overlay" *ngIf="isLoading">
+        <div class="spinner"></div>
+        <p>Loading print jobs...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" *ngIf="totalPages > 1">
+    <button 
+      class="btn btn-sm"
+      (click)="previousPage()"
+      [disabled]="currentPage === 1">
+      Previous
+    </button>
+    
+    <span class="page-info">
+      Page {{ currentPage }} of {{ totalPages }} ({{ totalItems }} jobs)
+    </span>
+    
+    <button 
+      class="btn btn-sm"
+      (click)="nextPage()"
+      [disabled]="currentPage === totalPages">
+      Next
+    </button>
+  </div>
+
+  <!-- Job Details Modal -->
+  <div class="modal" *ngIf="showJobDetails">
+    <div class="modal-content job-details">
+      <h3>Job Details</h3>
+      
+      <div class="details-grid">
+        <div class="detail-item">
+          <label>Job ID:</label>
+          <span>{{ showJobDetails.id }}</span>
+        </div>
+        
+        <div class="detail-item">
+          <label>Status:</label>
+          <span class="status-badge" [class]="getStatusClass(showJobDetails.status)">
+            {{ showJobDetails.status }}
+          </span>
+        </div>
+        
+        <div class="detail-item">
+          <label>Priority:</label>
+          <span>{{ showJobDetails.priority }}</span>
+        </div>
+        
+        <div class="detail-item">
+          <label>Copies:</label>
+          <span>{{ showJobDetails.copies }}</span>
+        </div>
+        
+        <div class="detail-item">
+          <label>Printer:</label>
+          <span>{{ showJobDetails.printerName }}</span>
+        </div>
+        
+        <div class="detail-item">
+          <label>Paper Size:</label>
+          <span>{{ showJobDetails.paperSize }}</span>
+        </div>
+        
+        <div class="detail-item">
+          <label>Orientation:</label>
+          <span>{{ showJobDetails.orientation }}</span>
+        </div>
+        
+        <div class="detail-item">
+          <label>Quality:</label>
+          <span>{{ showJobDetails.quality }}</span>
+        </div>
+        
+        <div class="detail-item">
+          <label>User:</label>
+          <span>{{ showJobDetails.userName || showJobDetails.userId || 'Anonymous' }}</span>
+        </div>
+        
+        <div class="detail-item">
+          <label>Created:</label>
+          <span>{{ formatDate(showJobDetails.createdAt) }}</span>
+        </div>
+        
+        <div class="detail-item" *ngIf="showJobDetails.startedAt">
+          <label>Started:</label>
+          <span>{{ formatDate(showJobDetails.startedAt) }}</span>
+        </div>
+        
+        <div class="detail-item" *ngIf="showJobDetails.completedAt">
+          <label>Completed:</label>
+          <span>{{ formatDate(showJobDetails.completedAt) }}</span>
+        </div>
+        
+        <div class="detail-item error" *ngIf="showJobDetails.error">
+          <label>Error:</label>
+          <span>{{ showJobDetails.error }}</span>
+        </div>
+      </div>
+      
+      <div class="image-preview">
+        <img [src]="showJobDetails.imagePath" [alt]="showJobDetails.imageId">
+      </div>
+      
+      <div class="modal-actions">
+        <button class="btn btn-secondary" (click)="showJobDetails = null">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

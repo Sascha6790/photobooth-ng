@@ -1,0 +1,53 @@
+<div class="selfie-action" [class.active]="isActive">
+  <div class="mode-selector" *ngIf="!isCountingDown">
+    <h3 class="selector-title">{{ translate('selfie.selectMode') }}</h3>
+    <div class="modes-grid">
+      <div 
+        class="mode-card"
+        *ngFor="let mode of modes"
+        [class.selected]="selectedMode?.id === mode.id"
+        (click)="selectMode(mode)">
+        <span class="mode-icon">{{ mode.icon }}</span>
+        <span class="mode-label">{{ mode.label }}</span>
+        <span class="mode-info">
+          {{ mode.countdown }}s / {{ mode.shots }} {{ mode.shots === 1 ? 'shot' : 'shots' }}
+        </span>
+      </div>
+    </div>
+    
+    <div class="action-buttons">
+      <app-button
+        [label]="translate('selfie.start')"
+        icon="▶️"
+        type="primary"
+        size="large"
+        [disabled]="!selectedMode"
+        (clicked)="startCapture()">
+      </app-button>
+    </div>
+  </div>
+  
+  <div class="countdown-display" *ngIf="isCountingDown">
+    <div class="countdown-content">
+      <div class="countdown-number" *ngIf="countdown > 0">
+        {{ countdown }}
+      </div>
+      <div class="capture-indicator" *ngIf="countdown === 0">
+        <span class="capture-icon">📸</span>
+        <span class="capture-text">Capturing!</span>
+      </div>
+      
+      <div class="shot-counter" *ngIf="totalShots > 1">
+        Shot {{ currentShot }} of {{ totalShots }}
+      </div>
+      
+      <app-button
+        [label]="translate('selfie.cancel')"
+        icon="❌"
+        type="danger"
+        size="medium"
+        (clicked)="cancel()">
+      </app-button>
+    </div>
+  </div>
+</div>

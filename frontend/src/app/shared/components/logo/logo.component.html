@@ -1,0 +1,20 @@
+<div 
+  class="logo-container"
+  [class]="positionClass"
+  [class.logo-visible]="visible"
+  [class.logo-clickable]="config.clickable"
+  [class.logo-custom]="config.customClass"
+  *ngIf="visible"
+  [@logoAnimation]="animationState"
+>
+  <img
+    [src]="config.src"
+    [alt]="config.alt || 'Logo'"
+    [ngStyle]="logoStyle"
+    class="logo-image"
+    (click)="onClick()"
+    (mouseenter)="onMouseEnter()"
+    (mouseleave)="onMouseLeave()"
+    (error)="onImageError($event)"
+  />
+</div>

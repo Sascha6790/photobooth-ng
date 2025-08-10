@@ -21,6 +21,16 @@ export default defineConfig({
     baseURL,
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
+    /* Reduce screenshot size for faster tests */
+    screenshot: 'only-on-failure',
+    /* Reduce video size for faster tests */
+    video: 'retain-on-failure',
+  },
+  /* Test timeout */
+  timeout: 30000,
+  /* Expect timeout */
+  expect: {
+    timeout: 5000,
   },
   /* Run your local dev server before starting the tests */
   webServer: {
@@ -45,15 +55,15 @@ export default defineConfig({
       use: { ...devices['Desktop Safari'] },
     },
 
-    // Uncomment for mobile browsers support
-    /* {
+    // Mobile browsers
+    {
       name: 'Mobile Chrome',
       use: { ...devices['Pixel 5'] },
     },
     {
       name: 'Mobile Safari',
       use: { ...devices['iPhone 12'] },
-    }, */
+    },
 
     // Uncomment for branded browsers
     /* {

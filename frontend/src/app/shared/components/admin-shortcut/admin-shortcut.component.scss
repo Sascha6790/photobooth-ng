@@ -1,0 +1,278 @@
+.pin-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease;
+}
+
+.pin-dialog {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+.pin-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e0e0e0;
+  
+  h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #333;
+  }
+  
+  .close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    &:hover {
+      color: #333;
+    }
+  }
+}
+
+.pin-dialog-body {
+  padding: 20px;
+  
+  p {
+    margin: 0 0 20px;
+    color: #666;
+    text-align: center;
+  }
+}
+
+.pin-input-container {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.pin-input {
+  width: 100%;
+  padding: 15px;
+  font-size: 24px;
+  text-align: center;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  letter-spacing: 10px;
+  background: #f9f9f9;
+  transition: all 0.3s ease;
+  
+  &:focus {
+    outline: none;
+    border-color: #4CAF50;
+    background: white;
+  }
+  
+  &.error {
+    border-color: #f44336;
+    animation: shake 0.5s;
+  }
+}
+
+.pin-dots {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.pin-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #ddd;
+  background: white;
+  transition: all 0.3s ease;
+  
+  &.filled {
+    background: #4CAF50;
+    border-color: #4CAF50;
+    transform: scale(1.2);
+  }
+}
+
+.pin-keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.keypad-btn {
+  padding: 15px;
+  font-size: 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: #f5f5f5;
+    transform: scale(1.05);
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+  
+  &.keypad-clear {
+    background: #fff3e0;
+    color: #ff9800;
+  }
+  
+  &.keypad-enter {
+    background: #e8f5e9;
+    color: #4CAF50;
+    
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.error-message {
+  color: #f44336;
+  text-align: center;
+  margin-top: 10px;
+  font-size: 14px;
+  animation: shake 0.5s;
+}
+
+.pin-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 20px;
+  border-top: 1px solid #e0e0e0;
+  
+  button {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    
+    &.btn-cancel {
+      background: white;
+      border: 1px solid #ddd;
+      color: #666;
+      
+      &:hover {
+        background: #f5f5f5;
+      }
+    }
+    
+    &.btn-verify {
+      background: #4CAF50;
+      border: none;
+      color: white;
+      
+      &:hover {
+        background: #45a049;
+      }
+      
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+
+// Corner indicators
+.corner-indicator {
+  position: fixed;
+  width: 50px;
+  height: 50px;
+  pointer-events: none;
+  opacity: 0;
+  
+  &.top-left {
+    top: 0;
+    left: 0;
+  }
+  
+  &.top-right {
+    top: 0;
+    right: 0;
+  }
+  
+  &.bottom-left {
+    bottom: 0;
+    left: 0;
+  }
+  
+  &.bottom-right {
+    bottom: 0;
+    right: 0;
+  }
+}
+
+// Animations
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-5px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(5px);
+  }
+}
+
+// Mobile responsiveness
+@media (max-width: 480px) {
+  .pin-dialog {
+    width: 95%;
+  }
+  
+  .keypad-btn {
+    padding: 12px;
+    font-size: 18px;
+  }
+}

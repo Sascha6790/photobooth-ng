@@ -1,0 +1,44 @@
+<div class="sidebar" [class.collapsed]="collapsed">
+  <div class="sidebar-header">
+    <div class="logo">
+      <span class="logo-icon">📸</span>
+      <span class="logo-text" [hidden]="collapsed">Photobooth</span>
+    </div>
+  </div>
+  
+  <nav class="sidebar-nav">
+    <ul class="nav-list">
+      <li *ngFor="let item of navItems" class="nav-item">
+        <a 
+          class="nav-link"
+          [class.active]="isActive(item.route)"
+          [class.has-children]="item.children"
+          (click)="item.children ? toggleExpanded(item) : navigate(item.route)">
+          <span class="nav-icon">{{ item.icon }}</span>
+          <span class="nav-label" [hidden]="collapsed">{{ item.label | translate }}</span>
+          <span class="nav-arrow" [hidden]="collapsed || !item.children" [class.expanded]="isExpanded(item)">
+            ▼
+          </span>
+        </a>
+        
+        <ul class="nav-sub-list" [hidden]="!item.children || collapsed || !isExpanded(item)">
+          <li *ngFor="let child of item.children" class="nav-sub-item">
+            <a 
+              class="nav-sub-link"
+              [class.active]="isActive(child.route)"
+              (click)="navigate(child.route)">
+              <span class="nav-icon">{{ child.icon }}</span>
+              <span class="nav-label">{{ child.label | translate }}</span>
+            </a>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+  
+  <div class="sidebar-footer">
+    <button class="collapse-btn" (click)="toggleSidebar()" [title]="collapsed ? 'Expand' : 'Collapse'">
+      <span class="collapse-icon" [class.rotated]="collapsed">◀</span>
+    </button>
+  </div>
+</div>

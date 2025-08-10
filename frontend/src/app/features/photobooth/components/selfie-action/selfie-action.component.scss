@@ -1,0 +1,153 @@
+.selfie-action {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  
+  &.active {
+    transform: scale(1.02);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.mode-selector {
+  text-align: center;
+}
+
+.selector-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin-bottom: 1.5rem;
+}
+
+.modes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.mode-card {
+  background: #f3f4f6;
+  border: 2px solid transparent;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  
+  &:hover {
+    background: #e5e7eb;
+    transform: translateY(-2px);
+  }
+  
+  &.selected {
+    background: white;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+}
+
+.mode-icon {
+  font-size: 2rem;
+}
+
+.mode-label {
+  font-weight: 600;
+  color: #1a202c;
+}
+
+.mode-info {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.countdown-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.countdown-content {
+  text-align: center;
+}
+
+.countdown-number {
+  font-size: 8rem;
+  font-weight: bold;
+  color: #3b82f6;
+  text-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.capture-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  animation: flash 0.5s ease-in-out;
+}
+
+.capture-icon {
+  font-size: 4rem;
+  animation: rotate 1s ease-in-out;
+}
+
+.capture-text {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ef4444;
+}
+
+.shot-counter {
+  margin: 1.5rem 0;
+  font-size: 1.125rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+@keyframes flash {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+    background: rgba(239, 68, 68, 0.1);
+  }
+  100% {
+    opacity: 1;
+    background: transparent;
+  }
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

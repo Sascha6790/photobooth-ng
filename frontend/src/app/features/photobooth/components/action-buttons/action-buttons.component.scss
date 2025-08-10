@@ -1,0 +1,30 @@
+.action-buttons-container {
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 1rem;
+  backdrop-filter: blur(10px);
+}
+
+.buttons-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.button-wrapper {
+  flex: 0 0 auto;
+  min-width: 150px;
+  
+  @media (max-width: 768px) {
+    width: 100%;
+    
+    ::ng-deep app-button {
+      width: 100%;
+      
+      button {
+        width: 100%;
+      }
+    }
+  }
+}

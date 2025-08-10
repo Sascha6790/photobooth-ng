@@ -1,0 +1,32 @@
+<div class="photobooth-container">
+  <app-stage-start 
+    *ngIf="currentStage === 'start'"
+    (actionTriggered)="onActionTriggered($event)">
+  </app-stage-start>
+  
+  <app-preview
+    *ngIf="currentStage === 'preview' || currentStage === 'countdown'"
+    (actionTriggered)="onActionTriggered($event)">
+  </app-preview>
+  
+  <app-stage-loader
+    *ngIf="currentStage === 'capture' || currentStage === 'processing'"
+    [stage]="loaderStage"
+    [progress]="loaderProgress">
+  </app-stage-loader>
+  
+  <app-stage-results
+    *ngIf="currentStage === 'result'"
+    [imageUrl]="resultImageUrl"
+    [filename]="resultFilename"
+    (actionSelected)="onActionTriggered($event)">
+  </app-stage-results>
+  
+  <div class="action-buttons-wrapper" 
+       *ngIf="currentStage === 'preview' || currentStage === 'start'">
+    <app-action-buttons
+      [currentStage]="currentStage === 'preview' ? 'preview' : 'start'"
+      (actionTriggered)="onActionTriggered($event)">
+    </app-action-buttons>
+  </div>
+</div>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Photobooth Gallery Link</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            background-color: #2196F3;
+            color: white;
+        }
+        .content {
+            padding: 30px;
+            text-align: center;
+        }
+        .stats {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 14px 28px;
+            background-color: #2196F3;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 20px 0;
+            font-size: 16px;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎉 Your Gallery is Ready!</h1>
+        </div>
+        <div class="content">
+            <p>Great news! Your photobooth gallery is now available.</p>
+            
+            <div class="stats">
+                <h2>📊 Gallery Stats</h2>
+                <p><strong>Total Photos:</strong> {{photoCount}}</p>
+            </div>
+            
+            <p>Click the button below to view and download your photos:</p>
+            
+            <a href="{{galleryUrl}}" class="button">View Gallery</a>
+            
+            <p><small>This link will remain active for 30 days.</small></p>
+        </div>
+        <div class="footer">
+            <p>Thank you for using our Photobooth!</p>
+            <p>© {{year}} Photobooth. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

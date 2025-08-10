@@ -1,0 +1,19 @@
+<div class="stage-loader">
+  <div class="loader-content">
+    <div class="icon-container" [class]="animationClass">
+      <span class="icon">{{ getIcon() }}</span>
+    </div>
+    
+    <app-loader
+      [message]="getMessage()"
+      size="large">
+    </app-loader>
+    
+    <div class="progress-container" *ngIf="progress > 0">
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="progress"></div>
+      </div>
+      <span class="progress-text">{{ progress }}%</span>
+    </div>
+  </div>
+</div>

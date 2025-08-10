@@ -1,0 +1,93 @@
+<div class="stage-results">
+  <div class="image-container">
+    <img [src]="imageUrl" [alt]="filename" class="result-image">
+    
+    <div class="qr-overlay" *ngIf="showQrCode && qrCodeUrl">
+      <img [src]="qrCodeUrl" alt="QR Code" class="qr-code">
+      <p class="qr-text">{{ translate('result.scanToDownload') }}</p>
+    </div>
+  </div>
+  
+  <div class="actions-container">
+    <div class="action-buttons">
+      <app-button
+        *ngIf="(config$ | async)?.print?.enabled"
+        [label]="translate('result.print')"
+        icon="🖨️"
+        type="primary"
+        size="large"
+        [disabled]="isPrinting"
+        (clicked)="onPrint()">
+      </app-button>
+      
+      <app-button
+        [label]="translate('result.email')"
+        icon="📧"
+        type="secondary"
+        size="large"
+        (clicked)="onEmail()">
+      </app-button>
+      
+      <app-button
+        [label]="translate('result.qrcode')"
+        icon="📱"
+        type="secondary"
+        size="large"
+        (clicked)="onQrCode()">
+      </app-button>
+      
+      <app-button
+        [label]="translate('result.download')"
+        icon="💾"
+        type="secondary"
+        size="large"
+        (clicked)="onDownload()">
+      </app-button>
+    </div>
+    
+    <div class="secondary-actions">
+      <app-button
+        [label]="translate('result.newPhoto')"
+        icon="📷"
+        type="primary"
+        size="large"
+        (clicked)="onNewPhoto()">
+      </app-button>
+      
+      <app-button
+        [label]="translate('result.delete')"
+        icon="🗑️"
+        type="danger"
+        size="medium"
+        (clicked)="onDelete()">
+      </app-button>
+    </div>
+  </div>
+  
+  <app-modal
+    [title]="translate('result.sendEmail')"
+    [visible]="showEmailModal"
+    (closed)="showEmailModal = false">
+    <div class="email-form">
+      <label class="email-label">{{ translate('result.emailAddress') }}</label>
+      <input
+        type="email"
+        [(ngModel)]="email"
+        class="email-input"
+        [placeholder]="translate('result.enterEmail')">
+      <div class="email-actions">
+        <app-button
+          [label]="translate('result.send')"
+          type="primary"
+          [disabled]="!email"
+          (clicked)="sendEmail()">
+        </app-button>
+        <app-button
+          [label]="translate('result.cancel')"
+          type="secondary"
+          (clicked)="showEmailModal = false">
+        </app-button>
+      </div>
+    </div>
+  </app-modal>
+</div>

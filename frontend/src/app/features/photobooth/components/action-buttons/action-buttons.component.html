@@ -1,0 +1,13 @@
+<div class="action-buttons-container">
+  <div class="buttons-grid">
+    <div *ngFor="let button of buttons" class="button-wrapper">
+      <app-button
+        [label]="button.label"
+        [icon]="button.icon"
+        [type]="button.type"
+        size="large"
+        (clicked)="button.action()">
+      </app-button>
+    </div>
+  </div>
+</div>

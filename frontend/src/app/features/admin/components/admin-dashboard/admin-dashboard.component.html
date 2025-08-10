@@ -1,0 +1,19 @@
+<div class="admin-dashboard">
+  <app-sidebar-navigation 
+    [collapsed]="isSidebarCollapsed"
+    (toggleCollapse)="toggleSidebar()">
+  </app-sidebar-navigation>
+  
+  <div class="admin-content" [class.sidebar-collapsed]="isSidebarCollapsed">
+    <div class="admin-header">
+      <button class="menu-toggle" (click)="toggleSidebar()">
+        <span class="menu-icon"></span>
+      </button>
+      <h1>Photobooth Administration</h1>
+    </div>
+    
+    <div class="admin-body">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</div>

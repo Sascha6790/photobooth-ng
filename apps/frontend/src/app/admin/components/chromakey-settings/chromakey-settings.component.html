@@ -1,0 +1,312 @@
+<div class="chromakey-settings">
+  <div class="settings-header">
+    <h2>Chromakey Settings</h2>
+    
+    <div class="header-actions">
+      <button 
+        class="btn btn-primary"
+        [disabled]="chromakeyForm.invalid || isSaving"
+        (click)="saveConfiguration()">
+        <i class="icon-save"></i> Save Configuration
+      </button>
+      
+      <button 
+        class="btn btn-secondary"
+        (click)="resetConfiguration()">
+        <i class="icon-reset"></i> Reset
+      </button>
+    </div>
+  </div>
+
+  <div class="settings-container">
+    <!-- Configuration Panel -->
+    <div class="config-panel">
+      <h3>Configuration</h3>
+      
+      <form [formGroup]="chromakeyForm">
+        <div class="form-group">
+          <label class="toggle-label">
+            <input type="checkbox" formControlName="enabled">
+            <span class="toggle-switch"></span>
+            Enable Chromakey
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label>Key Color</label>
+          <div class="color-input-group">
+            <input 
+              type="color" 
+              formControlName="keyColor"
+              class="color-picker">
+            <input 
+              type="text" 
+              formControlName="keyColor"
+              class="form-control color-text"
+              readonly>
+            <button 
+              class="btn btn-sm"
+              (click)="showColorPicker = !showColorPicker">
+              <i class="icon-eyedropper"></i> Pick
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>
+            Tolerance
+            <span class="value-display">{{ chromakeyForm.value.tolerance }}</span>
+          </label>
+          <input 
+            type="range"
+            formControlName="tolerance"
+            min="0"
+            max="100"
+            class="slider">
+        </div>
+
+        <div class="form-group">
+          <label>
+            Smoothing
+            <span class="value-display">{{ chromakeyForm.value.smoothing }}</span>
+          </label>
+          <input 
+            type="range"
+            formControlName="smoothing"
+            min="0"
+            max="10"
+            step="0.1"
+            class="slider">
+        </div>
+
+        <div class="form-group">
+          <label>
+            Spill Suppression
+            <span class="value-display">{{ chromakeyForm.value.spillSuppression }}</span>
+          </label>
+          <input 
+            type="range"
+            formControlName="spillSuppression"
+            min="0"
+            max="5"
+            step="0.1"
+            class="slider">
+        </div>
+
+        <div class="form-group">
+          <label>
+            Edge Blur
+            <span class="value-display">{{ chromakeyForm.value.edgeBlur }}</span>
+          </label>
+          <input 
+            type="range"
+            formControlName="edgeBlur"
+            min="0"
+            max="10"
+            step="0.1"
+            class="slider">
+        </div>
+
+        <div class="form-group">
+          <label>
+            Light Wrap
+            <span class="value-display">{{ chromakeyForm.value.lightWrap }}</span>
+          </label>
+          <input 
+            type="range"
+            formControlName="lightWrap"
+            min="0"
+            max="5"
+            step="0.1"
+            class="slider">
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="preserveDetails">
+            Preserve Fine Details
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input 
+              type="checkbox" 
+              formControlName="autoDetect"
+              (change)="toggleAutoDetect()">
+            Auto-Detect Key Color
+          </label>
+        </div>
+      </form>
+
+      <!-- Presets -->
+      <div class="presets-section">
+        <h4>Presets</h4>
+        <div class="preset-buttons">
+          <button 
+            *ngFor="let preset of presets"
+            class="preset-btn"
+            [class.active]="selectedPreset?.id === preset.id"
+            (click)="applyPreset(preset)">
+            {{ preset.name }}
+            <span class="preset-description">{{ preset.description }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview Panel -->
+    <div class="preview-panel">
+      <h3>Live Preview</h3>
+      
+      <div class="preview-controls">
+        <button 
+          class="btn btn-primary"
+          *ngIf="!isPreviewActive"
+          (click)="startPreview()">
+          <i class="icon-play"></i> Start Preview
+        </button>
+        
+        <button 
+          class="btn btn-danger"
+          *ngIf="isPreviewActive"
+          (click)="stopPreview()">
+          <i class="icon-stop"></i> Stop Preview
+        </button>
+        
+        <div class="preview-stats" *ngIf="isPreviewActive">
+          <span>FPS: {{ frameRate.toFixed(1) }}</span>
+          <span>Processing: {{ processingTime.toFixed(2) }}ms</span>
+        </div>
+      </div>
+
+      <div class="preview-container">
+        <video 
+          #videoPreview
+          class="video-preview"
+          [hidden]="!isPreviewActive"
+          autoplay
+          muted>
+        </video>
+        
+        <canvas 
+          #canvas
+          class="canvas-preview"
+          [hidden]="!isPreviewActive"
+          (click)="pickColorFromCanvas($event)">
+        </canvas>
+        
+        <div class="preview-placeholder" *ngIf="!isPreviewActive">
+          <i class="icon-camera-off"></i>
+          <p>Click "Start Preview" to begin</p>
+        </div>
+      </div>
+
+      <div class="color-picker-overlay" *ngIf="showColorPicker && isPreviewActive">
+        <p>Click on the preview to pick a color</p>
+        <button class="btn btn-sm" (click)="showColorPicker = false">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Backgrounds Panel -->
+    <div class="backgrounds-panel">
+      <div class="backgrounds-header">
+        <h3>Backgrounds</h3>
+        
+        <button class="btn btn-primary btn-sm" (click)="showUploadDialog = true">
+          <i class="icon-upload"></i> Upload
+        </button>
+      </div>
+
+      <div class="category-filter">
+        <button 
+          *ngFor="let category of ['All', ...backgroundCategories]"
+          class="category-btn"
+          [class.active]="selectedCategory === category"
+          (click)="selectedCategory = category">
+          {{ category }}
+        </button>
+      </div>
+
+      <div class="backgrounds-grid">
+        <div 
+          *ngFor="let bg of getFilteredBackgrounds()"
+          class="background-item"
+          [class.active]="selectedBackground?.id === bg.id"
+          [class.is-active]="bg.isActive"
+          (click)="selectBackground(bg)">
+          
+          <img [src]="bg.thumbnail" [alt]="bg.name">
+          
+          <div class="background-info">
+            <span class="background-name">{{ bg.name }}</span>
+            <span class="background-category">{{ bg.category }}</span>
+          </div>
+          
+          <div class="background-actions">
+            <button 
+              class="btn-icon"
+              (click)="deleteBackground(bg); $event.stopPropagation()">
+              <i class="icon-delete"></i>
+            </button>
+          </div>
+          
+          <div class="active-indicator" *ngIf="bg.isActive">
+            <i class="icon-check"></i>
+          </div>
+        </div>
+        
+        <div class="no-backgrounds" *ngIf="getFilteredBackgrounds().length === 0">
+          <i class="icon-image-off"></i>
+          <p>No backgrounds available</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload Dialog -->
+  <div class="modal" *ngIf="showUploadDialog">
+    <div class="modal-content">
+      <h3>Upload Background</h3>
+      
+      <div class="upload-form">
+        <div class="form-group">
+          <label>Category</label>
+          <select 
+            [(ngModel)]="selectedCategory"
+            class="form-control">
+            <option *ngFor="let cat of backgroundCategories" [value]="cat">
+              {{ cat }}
+            </option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Select Image</label>
+          <input 
+            type="file"
+            accept="image/*"
+            (change)="uploadBackground($event)"
+            class="file-input">
+        </div>
+        
+        <div class="upload-info">
+          <p>Recommended: 1920x1080 or higher</p>
+          <p>Supported formats: JPG, PNG, WEBP</p>
+        </div>
+      </div>
+      
+      <div class="modal-actions">
+        <button class="btn btn-secondary" (click)="showUploadDialog = false">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Loading configuration...</p>
+  </div>
+</div>

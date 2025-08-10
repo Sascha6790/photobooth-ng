@@ -1,0 +1,66 @@
+<div class="preview-container" data-testid="preview-container">
+  <div class="preview-wrapper">
+    <video #video 
+           class="preview-video"
+           data-testid="preview-video" 
+           autoplay 
+           playsinline 
+           muted>
+    </video>
+    
+    <canvas #canvas 
+            class="preview-canvas"
+            data-testid="preview-canvas" 
+            [hidden]="true">
+    </canvas>
+    
+    <div class="frame-overlay" *ngIf="showFrame && frameUrl">
+      <img [src]="frameUrl" alt="Frame" class="frame-image">
+    </div>
+    
+    <div class="countdown-overlay" *ngIf="isCountingDown">
+      <div class="countdown-number">{{ countdown }}</div>
+    </div>
+  </div>
+  
+  <div class="controls">
+    <div class="mode-selector">
+      <button class="mode-button" 
+              [class.active]="captureMode === 'photo'"
+              (click)="captureMode = 'photo'">
+        Photo
+      </button>
+      <button class="mode-button" 
+              [class.active]="captureMode === 'collage'"
+              (click)="captureMode = 'collage'">
+        Collage
+      </button>
+      <button class="mode-button" 
+              [class.active]="captureMode === 'video'"
+              (click)="captureMode = 'video'">
+        Video
+      </button>
+    </div>
+    
+    <div class="action-buttons">
+      <app-button
+        *ngIf="!isCountingDown"
+        label="Capture"
+        icon="📷"
+        type="primary"
+        size="large"
+        data-testid="capture-button"
+        (clicked)="onCaptureClick()">
+      </app-button>
+      
+      <app-button
+        *ngIf="isCountingDown"
+        label="Cancel"
+        icon="❌"
+        type="danger"
+        size="large"
+        (clicked)="cancelCountdown()">
+      </app-button>
+    </div>
+  </div>
+</div>
