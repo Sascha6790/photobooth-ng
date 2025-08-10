@@ -40,7 +40,9 @@ start_backend() {
     touch "$LOG_FILE"
     
     # Wechsle ins richtige Verzeichnis und starte Backend
-    cd /Users/sascha/projects/photobooth/photobooth-ng
+    # Bestimme das Script-Verzeichnis und gehe eine Ebene hoch
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    cd "$SCRIPT_DIR/.."
     npx nx serve backend --port=$PORT > "$LOG_FILE" 2>&1 &
     PID=$!
     

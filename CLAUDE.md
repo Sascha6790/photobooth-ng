@@ -3,13 +3,13 @@
 ## Projektübersicht
 Migration einer PHP-basierten Photobooth-Anwendung zu einer modernen NestJS (Backend) + Angular (Frontend) Architektur.
 
-## Aktueller Status (08.08.2025)
-- ✅ **Backend**: 100% migriert (NestJS mit allen Services)
-- ✅ **Database**: TypeORM mit PostgreSQL/SQLite
-- ✅ **WebSocket**: Socket.IO für Realtime-Features
-- ✅ **Docker**: Vollständige Containerisierung
-- ✅ **Hardware**: GPIO & Camera Service implementiert
-- 🚧 **Frontend**: 70% migriert (Admin UI fertig, Build-Fehler vorhanden)
+## Aktueller Status (10.08.2025)
+- **Backend**: NestJS mit allen Services implementiert
+- **Database**: TypeORM mit PostgreSQL/SQLite
+- **WebSocket**: Socket.IO für Realtime-Features
+- **Docker**: Vollständige Containerisierung
+- **Hardware**: GPIO & Camera Service implementiert
+- **Frontend**: Angular mit Admin UI, Settings und Gallery
 
 ## Projektstruktur
 ```
@@ -22,7 +22,7 @@ Migration einer PHP-basierten Photobooth-Anwendung zu einer modernen NestJS (Bac
 
 ## Wichtige Implementierungsdetails
 
-### Backend Services (✅ Alle implementiert)
+### Backend Services
 1. **ConfigurationService**: Zentrale Konfiguration mit Joi-Validierung
 2. **CameraService**: Strategy Pattern für verschiedene Kamera-Typen
 3. **ImageProcessingService**: Bildbearbeitung mit Sharp
@@ -32,44 +32,35 @@ Migration einer PHP-basierten Photobooth-Anwendung zu einer modernen NestJS (Bac
 7. **CacheService**: LRU/LFU/FIFO Caching-Strategien
 8. **BackupService**: Automatische Backups mit Rotation
 
-### Frontend Components (70% fertig)
-#### ✅ Fertig:
+### Frontend Components
 - Admin Module mit Routing
 - Settings Form (7 Kategorien)
 - Sidebar Navigation
 - Custom Form Controls (Color Picker, File Upload, Toggle, Number Stepper)
 - Core Components (Stage*, Preview, Gallery)
 - Settings State Management mit Undo/Redo
+- i18n Unterstützung (DE/EN)
 
-#### ⚠️ Build-Fehler vorhanden:
-- Admin Components Standalone-Problem
-- TypeScript Typ-Fehler
-- Template Binding Issues
-
-### Database Schema (✅ Fertig)
+### Database Schema
 - **Image**: Metadaten, Tags, Bewertungen
 - **Session**: Multi-User Sessions
 - **PrintJob**: Druckaufträge mit Status
 - **Settings**: Konfiguration in DB
 
-### Docker Setup (✅ Fertig)
+### Docker Setup
 - Multi-Stage Builds
 - Development mit Hot-Reload
 - Production optimiert
 - PostgreSQL, Redis, MailHog integriert
 - Health Checks & Monitoring
 
-## Kritische TODOs
+## Offene Aufgaben
 
-### 🔴 Sofort beheben (Blocker):
-1. **Frontend Build Fehler** - verhindert Deployment
-2. **Admin Panel Components** - müssen fertiggestellt werden
-3. **E2E Tests** - für Hauptflows
-
-### 🟡 Wichtig:
-1. **Security**: JWT, RBAC, HTTPS
-2. **Mail Service**: SMTP Implementation
-3. **Production Scripts**: Raspberry Pi Deployment
+### Wichtige nächste Schritte:
+1. **GitHub Workflows testen** - CI/CD Pipeline verifizieren
+2. **Documentation** - User Manual und Admin Guide
+3. **Performance Optimization** - Bundle Size, Lazy Loading
+4. **RemoteStorageService** - FTP/SFTP Implementation
 
 ## Environment-Strategie
 
@@ -108,18 +99,18 @@ Die Scripts wurden speziell entwickelt um folgende Probleme zu lösen:
 ### Development:
 ```bash
 # Backend starten und überwachen (WICHTIG: Immer vollständige Pfade verwenden!)
-/Users/sascha/projects/photobooth/photobooth-ng/scripts/backend-start.sh    # Startet Backend (prüft ob bereits läuft)
-/Users/sascha/projects/photobooth/photobooth-ng/scripts/backend-monitor.sh  # Überwacht Backend und startet bei Bedarf neu
-/Users/sascha/projects/photobooth/photobooth-ng/scripts/backend-stop.sh     # Stoppt Backend
+./scripts/backend-start.sh    # Startet Backend (prüft ob bereits läuft)
+./scripts/backend-monitor.sh  # Überwacht Backend und startet bei Bedarf neu
+./scripts/backend-stop.sh     # Stoppt Backend
 
 # Frontend (Port 4200)
-/Users/sascha/projects/photobooth/photobooth-ng/scripts/frontend-stop.sh    # Stoppt Frontend komplett
-/Users/sascha/projects/photobooth/photobooth-ng/scripts/frontend-start.sh   # Startet Frontend
-/Users/sascha/projects/photobooth/photobooth-ng/scripts/frontend-test.sh    # Testet ob Frontend läuft
-/Users/sascha/projects/photobooth/photobooth-ng/scripts/frontend-test.sh -w # Watch Mode (testet alle 5 Sekunden)
+./scripts/frontend-stop.sh    # Stoppt Frontend komplett
+./scripts/frontend-start.sh   # Startet Frontend
+./scripts/frontend-test.sh    # Testet ob Frontend läuft
+./scripts/frontend-test.sh -w # Watch Mode (testet alle 5 Sekunden)
 
 # API Tests (Port 3000)
-/Users/sascha/projects/photobooth/photobooth-ng/scripts/api-test.sh         # Testet alle Backend API Endpoints
+./scripts/api-test.sh         # Testet alle Backend API Endpoints
 
 # Oder direkt aus dem photobooth-ng Verzeichnis:
 cd photobooth-ng && npx nx serve backend
@@ -137,7 +128,7 @@ Die Scripts im `scripts/` Verzeichnis helfen beim Service-Management.
 1. **IMMER vollständige Pfade verwenden:**
 ```bash
 # ✅ RICHTIG:
-/Users/sascha/projects/photobooth/photobooth-ng/scripts/backend-start.sh
+./scripts/backend-start.sh
 
 # ❌ FALSCH:
 ./scripts/backend-start.sh
@@ -148,29 +139,29 @@ cd scripts && ./backend-start.sh
 ```bash
 # Backend Workflow:
 # 1. Erst stoppen (auch wenn nichts läuft!)
-/Users/sascha/projects/photobooth/photobooth-ng/scripts/backend-stop.sh
+./scripts/backend-stop.sh
 
 # 2. Dann starten
-/Users/sascha/projects/photobooth/photobooth-ng/scripts/backend-start.sh
+./scripts/backend-start.sh
 
 # 3. API testen
-/Users/sascha/projects/photobooth/photobooth-ng/scripts/api-test.sh
+./scripts/api-test.sh
 
 # 4. Wieder stoppen
-/Users/sascha/projects/photobooth/photobooth-ng/scripts/backend-stop.sh
+./scripts/backend-stop.sh
 
 # Frontend Workflow (analog):
 # 1. Erst stoppen
-/Users/sascha/projects/photobooth/photobooth-ng/scripts/frontend-stop.sh
+./scripts/frontend-stop.sh
 
 # 2. Dann starten
-/Users/sascha/projects/photobooth/photobooth-ng/scripts/frontend-start.sh
+./scripts/frontend-start.sh
 
 # 3. Frontend testen
-/Users/sascha/projects/photobooth/photobooth-ng/scripts/frontend-test.sh
+./scripts/frontend-test.sh
 
 # 4. Wieder stoppen
-/Users/sascha/projects/photobooth/photobooth-ng/scripts/frontend-stop.sh
+./scripts/frontend-stop.sh
 ```
 
 3. **NIEMALS direkt nx aufrufen:**
@@ -180,7 +171,7 @@ npx nx serve backend
 cd photobooth-ng && npx nx serve backend
 
 # ✅ RICHTIG - Verwende immer die Scripts:
-/Users/sascha/projects/photobooth/photobooth-ng/scripts/backend-start.sh
+./scripts/backend-start.sh
 ```
 
 4. **Bei Problemen:**
@@ -282,7 +273,7 @@ Testing: Get gallery (page 1, limit 5)
   Response: {"data":[...],"pagination":{"page":1,"limit":5,"total":42}}
 ```
 
-## API Endpoints (✅ Alle implementiert)
+## API Endpoints
 - POST `/api/capture` - Foto aufnehmen
 - GET `/api/gallery` - Galerie abrufen
 - GET/POST `/api/settings` - Einstellungen
@@ -291,7 +282,7 @@ Testing: Get gallery (page 1, limit 5)
 - POST `/api/chromakeying/*` - Greenscreen
 - POST `/api/admin/*` - Admin-Funktionen
 
-## WebSocket Events (✅ Implementiert)
+## WebSocket Events
 - `gallery-update` - Galerie-Updates
 - `settings-sync` - Settings-Synchronisation
 - `print-queue-update` - Drucker-Queue
@@ -299,16 +290,14 @@ Testing: Get gallery (page 1, limit 5)
 - `collaboration-*` - Multi-User Features
 
 ## Bekannte Probleme
-1. Frontend Build schlägt fehl (Admin Components)
-2. TypeScript strict mode Fehler
-3. Angular Animations Module fehlt
-4. Config Service Type-Probleme
+1. WebSocket CORS bei einigen API Requests
+2. Mobile Touch Tests in CI Environment
 
 ## Nächste Schritte
-1. Build-Fehler beheben
-2. E2E Tests implementieren
-3. Security Layer hinzufügen
-4. Production Deployment vorbereiten
+1. GitHub Actions Workflows testen
+2. Documentation vervollständigen
+3. Performance Optimierung
+4. Auto-Update Mechanism verifizieren
 
 ---
-Letzte Aktualisierung: 08.08.2025
+Letzte Aktualisierung: 10.08.2025
