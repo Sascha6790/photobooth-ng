@@ -1,0 +1,32 @@
+[Unit]
+Description=Photobooth Frontend Service
+After=network.target photobooth-backend.service
+Wants=photobooth-backend.service
+
+[Service]
+Type=simple
+User=photobooth
+Group=photobooth
+WorkingDirectory=/opt/photobooth/frontend
+Environment="NODE_ENV=production"
+Environment="PORT=4200"
+ExecStart=/usr/bin/npx http-server dist/browser -p 4200 --proxy http://localhost:3000 -c-1
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/photobooth/frontend.log
+StandardError=append:/var/log/photobooth/frontend-error.log
+
+# Resource limits
+LimitNOFILE=65536
+MemoryLimit=256M
+CPUQuota=50%
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/opt/photobooth/frontend
+
+[Install]
+WantedBy=multi-user.target

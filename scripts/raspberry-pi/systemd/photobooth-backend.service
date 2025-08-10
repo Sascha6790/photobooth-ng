@@ -1,0 +1,32 @@
+[Unit]
+Description=Photobooth Backend Service
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=photobooth
+Group=photobooth
+WorkingDirectory=/opt/photobooth/backend
+Environment="NODE_ENV=production"
+Environment="PORT=3000"
+ExecStart=/usr/bin/node dist/main.js
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/photobooth/backend.log
+StandardError=append:/var/log/photobooth/backend-error.log
+
+# Resource limits
+LimitNOFILE=65536
+MemoryLimit=512M
+CPUQuota=80%
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/photobooth/uploads /var/log/photobooth
+
+[Install]
+WantedBy=multi-user.target
