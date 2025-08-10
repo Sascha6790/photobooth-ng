@@ -57,4 +57,5 @@ docs/_site/
 .jekyll-cache/
 .jekyll-metadata
 test-results.json
+test-results/
 test-summary.json
