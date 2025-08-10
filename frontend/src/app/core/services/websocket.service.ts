@@ -37,14 +37,27 @@ export interface CollaborationEvent {
   timestamp: string;
 }
 
+export enum ConnectionState {
+  DISCONNECTED = 'disconnected',
+  CONNECTING = 'connecting',
+  CONNECTED = 'connected',
+  RECONNECTING = 'reconnecting',
+  ERROR = 'error'
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class WebSocketService {
   private socket!: Socket;
   private connectionStatus$ = new BehaviorSubject<boolean>(false);
+  private connectionState$ = new BehaviorSubject<ConnectionState>(ConnectionState.DISCONNECTED);
   private currentRoom$ = new BehaviorSubject<string | null>(null);
   private buzzerSession$ = new BehaviorSubject<BuzzerSession | null>(null);
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 10;
+  private reconnectTimeout?: any;
+  private isIntentionalDisconnect = false;
 
   constructor() {
     this.initializeSocket();
@@ -56,9 +69,13 @@ export class WebSocketService {
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionDelay: 1000,
-      reconnectionAttempts: 5,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: this.maxReconnectAttempts,
+      timeout: 20000,
+      autoConnect: true
     };
 
+    this.connectionState$.next(ConnectionState.CONNECTING);
     this.socket = io(url, options);
     this.setupEventListeners();
   }
@@ -67,26 +84,75 @@ export class WebSocketService {
     this.socket.on('connect', () => {
       console.log('WebSocket connected:', this.socket.id);
       this.connectionStatus$.next(true);
+      this.connectionState$.next(ConnectionState.CONNECTED);
+      this.reconnectAttempts = 0;
+      
+      // Re-join room if we were in one before disconnect
+      const currentRoom = this.currentRoom$.value;
+      if (currentRoom && !this.isIntentionalDisconnect) {
+        this.joinRoom(currentRoom).catch(err => 
+          console.warn('Failed to rejoin room after reconnect:', err)
+        );
+      }
     });
 
-    this.socket.on('disconnect', () => {
-      console.log('WebSocket disconnected');
+    this.socket.on('disconnect', (reason) => {
+      console.log('WebSocket disconnected:', reason);
       this.connectionStatus$.next(false);
-      this.currentRoom$.next(null);
+      
+      if (!this.isIntentionalDisconnect) {
+        this.connectionState$.next(ConnectionState.RECONNECTING);
+        // Don't clear room on unintentional disconnect
+      } else {
+        this.connectionState$.next(ConnectionState.DISCONNECTED);
+        this.currentRoom$.next(null);
+      }
     });
 
     this.socket.on('connect_error', (error) => {
-      console.error('WebSocket connection error:', error);
+      console.error('WebSocket connection error:', error.message);
       this.connectionStatus$.next(false);
+      this.reconnectAttempts++;
+      
+      if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+        this.connectionState$.next(ConnectionState.ERROR);
+        console.error('Max reconnection attempts reached. Please check your connection.');
+      } else {
+        this.connectionState$.next(ConnectionState.RECONNECTING);
+      }
+    });
+
+    this.socket.on('reconnect', (attemptNumber) => {
+      console.log('WebSocket reconnected after', attemptNumber, 'attempts');
+      this.connectionState$.next(ConnectionState.CONNECTED);
+    });
+
+    this.socket.on('reconnect_attempt', (attemptNumber) => {
+      console.log('WebSocket reconnection attempt', attemptNumber);
+      this.connectionState$.next(ConnectionState.RECONNECTING);
+    });
+
+    this.socket.on('reconnect_failed', () => {
+      console.error('WebSocket reconnection failed');
+      this.connectionState$.next(ConnectionState.ERROR);
     });
 
     this.socket.on('error', (error) => {
       console.error('WebSocket error:', error);
+      this.connectionState$.next(ConnectionState.ERROR);
     });
   }
 
   getConnectionStatus(): Observable<boolean> {
     return this.connectionStatus$.asObservable();
+  }
+
+  getConnectionState(): Observable<ConnectionState> {
+    return this.connectionState$.asObservable();
+  }
+
+  isConnected(): boolean {
+    return this.socket?.connected || false;
   }
 
   getCurrentRoom(): Observable<string | null> {
@@ -98,13 +164,28 @@ export class WebSocketService {
   }
 
   connect(config?: WebSocketConfig) {
+    this.isIntentionalDisconnect = false;
     if (this.socket) {
       this.socket.disconnect();
     }
     this.initializeSocket(config);
   }
 
+  reconnect() {
+    this.isIntentionalDisconnect = false;
+    this.reconnectAttempts = 0;
+    if (this.socket) {
+      this.socket.connect();
+    } else {
+      this.initializeSocket();
+    }
+  }
+
   disconnect() {
+    this.isIntentionalDisconnect = true;
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+    }
     if (this.socket) {
       this.socket.disconnect();
     }
@@ -112,7 +193,17 @@ export class WebSocketService {
 
   joinRoom(room: string, userId?: string): Promise<any> {
     return new Promise((resolve, reject) => {
+      if (!this.isConnected()) {
+        reject('WebSocket is not connected. Please check your connection.');
+        return;
+      }
+      
+      const timeout = setTimeout(() => {
+        reject('Join room request timed out');
+      }, 5000);
+      
       this.socket.emit('join-room', { room, userId }, (response: any) => {
+        clearTimeout(timeout);
         if (response?.success) {
           this.currentRoom$.next(room);
           resolve(response);
@@ -415,7 +506,17 @@ export class WebSocketService {
 
   emitWithAck(event: string, data: any): Promise<any> {
     return new Promise((resolve, reject) => {
+      if (!this.isConnected()) {
+        reject('WebSocket is not connected. Please check your connection.');
+        return;
+      }
+      
+      const timeout = setTimeout(() => {
+        reject(`Request '${event}' timed out`);
+      }, 10000);
+      
       this.socket.emit(event, data, (response: any) => {
+        clearTimeout(timeout);
         if (response?.success) {
           resolve(response);
         } else {

@@ -127,12 +127,12 @@ class GPhoto2Strategy implements CameraStrategy {
     const tempFile = `/tmp/capture_${Date.now()}.jpg`;
     
     try {
-      // Capture image and download to temp file
+      // Capture image and download to temp file (increased timeout for DSLR cameras)
       await this.executeCommand('gphoto2', [
         '--capture-image-and-download',
         '--filename', tempFile,
         '--force-overwrite'
-      ]);
+      ], 45000); // 45 second timeout for DSLR capture
       
       // Read the captured image
       const imageBuffer = await fs.readFile(tempFile);
@@ -156,11 +156,18 @@ class GPhoto2Strategy implements CameraStrategy {
     this.logger.debug('GPhoto2 camera cleanup');
   }
   
-  private executeCommand(command: string, args: string[]): Promise<string> {
+  private executeCommand(command: string, args: string[], timeout = 30000): Promise<string> {
     return new Promise((resolve, reject) => {
       const process = spawn(command, args);
       let stdout = '';
       let stderr = '';
+      let timeoutHandle: NodeJS.Timeout;
+      
+      // Set timeout for long-running commands
+      timeoutHandle = setTimeout(() => {
+        process.kill('SIGTERM');
+        reject(new Error(`Command timeout after ${timeout}ms: ${command} ${args.join(' ')}`));
+      }, timeout);
       
       process.stdout.on('data', (data) => {
         stdout += data.toString();
@@ -171,11 +178,17 @@ class GPhoto2Strategy implements CameraStrategy {
       });
       
       process.on('close', (code) => {
+        clearTimeout(timeoutHandle);
         if (code === 0) {
           resolve(stdout);
         } else {
           reject(new Error(`Command failed: ${stderr}`));
         }
+      });
+      
+      process.on('error', (err) => {
+        clearTimeout(timeoutHandle);
+        reject(new Error(`Command error: ${err.message}`));
       });
     });
   }
@@ -237,8 +250,8 @@ class WebcamStrategy implements CameraStrategy {
         ];
       }
       
-      // Capture single frame from webcam using ffmpeg
-      await this.executeCommand('ffmpeg', ffmpegArgs);
+      // Capture single frame from webcam using ffmpeg (with timeout)
+      await this.executeCommand('ffmpeg', ffmpegArgs, 15000); // 15 second timeout
       
       // Read the captured image
       const imageBuffer = await fs.readFile(tempFile);
@@ -262,11 +275,18 @@ class WebcamStrategy implements CameraStrategy {
     this.logger.debug('Webcam cleanup');
   }
   
-  private executeCommand(command: string, args: string[]): Promise<string> {
+  private executeCommand(command: string, args: string[], timeout = 30000): Promise<string> {
     return new Promise((resolve, reject) => {
       const process = spawn(command, args);
       let stdout = '';
       let stderr = '';
+      let timeoutHandle: NodeJS.Timeout;
+      
+      // Set timeout for long-running commands
+      timeoutHandle = setTimeout(() => {
+        process.kill('SIGTERM');
+        reject(new Error(`Command timeout after ${timeout}ms: ${command} ${args.join(' ')}`));
+      }, timeout);
       
       process.stdout.on('data', (data) => {
         stdout += data.toString();
@@ -277,11 +297,17 @@ class WebcamStrategy implements CameraStrategy {
       });
       
       process.on('close', (code) => {
+        clearTimeout(timeoutHandle);
         if (code === 0) {
           resolve(stdout);
         } else {
           reject(new Error(`Command failed: ${stderr}`));
         }
+      });
+      
+      process.on('error', (err) => {
+        clearTimeout(timeoutHandle);
+        reject(new Error(`Command error: ${err.message}`));
       });
     });
   }
@@ -308,14 +334,14 @@ class RaspistillStrategy implements CameraStrategy {
     const tempFile = `/tmp/raspistill_${Date.now()}.jpg`;
     
     try {
-      // Capture image with raspistill
+      // Capture image with raspistill (with timeout)
       await this.executeCommand('raspistill', [
         '-o', tempFile,
         '-w', '1920',
         '-h', '1080',
         '-q', '90',
         '-t', '100' // Minimal delay
-      ]);
+      ], 20000); // 20 second timeout for Raspberry Pi camera
       
       // Read the captured image
       const imageBuffer = await fs.readFile(tempFile);
@@ -339,11 +365,18 @@ class RaspistillStrategy implements CameraStrategy {
     this.logger.debug('Raspistill camera cleanup');
   }
   
-  private executeCommand(command: string, args: string[]): Promise<string> {
+  private executeCommand(command: string, args: string[], timeout = 30000): Promise<string> {
     return new Promise((resolve, reject) => {
       const process = spawn(command, args);
       let stdout = '';
       let stderr = '';
+      let timeoutHandle: NodeJS.Timeout;
+      
+      // Set timeout for long-running commands
+      timeoutHandle = setTimeout(() => {
+        process.kill('SIGTERM');
+        reject(new Error(`Command timeout after ${timeout}ms: ${command} ${args.join(' ')}`));
+      }, timeout);
       
       process.stdout.on('data', (data) => {
         stdout += data.toString();
@@ -354,11 +387,17 @@ class RaspistillStrategy implements CameraStrategy {
       });
       
       process.on('close', (code) => {
+        clearTimeout(timeoutHandle);
         if (code === 0) {
           resolve(stdout);
         } else {
           reject(new Error(`Command failed: ${stderr}`));
         }
+      });
+      
+      process.on('error', (err) => {
+        clearTimeout(timeoutHandle);
+        reject(new Error(`Command error: ${err.message}`));
       });
     });
   }

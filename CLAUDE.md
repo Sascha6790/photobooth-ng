@@ -76,6 +76,29 @@ Migration einer PHP-basierten Photobooth-Anwendung zu einer modernen NestJS (Bac
 - **Windows**: Via WSL oder digiCamControl
 - **macOS**: Entwicklung mit Docker/Mocks
 
+## Commit Message Management
+
+### ⚠️ WICHTIG: Commit Messages für Multi-Agent Workflows ⚠️
+
+Wenn du deine Aufgaben erledigt hast:
+1. **Erstelle eine Commit-Message** in `tmp/commit-msg.md` (im Projektverzeichnis)
+2. **Format**: Strukturierte Auflistung der Änderungen
+3. **Warte auf Anweisung** vom User, bevor du einen Commit erstellst
+4. **Multi-Agent Koordination**: Mehrere Agents können ihre Messages in die gleiche Datei schreiben (anhängen, nicht überschreiben!)
+5. Die Messages werden später gemerged für einen gemeinsamen Commit
+
+**Wichtig**: Die Datei liegt unter `/Users/sascha/projects/photobooth/photobooth-ng/tmp/commit-msg.md`
+
+**Commit Message Format:**
+```markdown
+## Agent: [Agent-Name/Session-ID]
+### Änderungen:
+- feat: Beschreibung der neuen Features
+- fix: Beschreibung der Bugfixes
+- refactor: Beschreibung der Refactorings
+- docs: Beschreibung der Dokumentationsänderungen
+```
+
 ## Build & Run Commands
 
 ### ⚠️ WICHTIGE HINWEISE FÜR CLAUDE SESSIONS ⚠️

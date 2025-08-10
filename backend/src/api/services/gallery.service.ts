@@ -26,6 +26,12 @@ export class GalleryService {
   async getImages(query: GalleryQueryDto): Promise<GalleryResponseDto> {
     const images = Array.from(this.imageDatabase.values());
     
+    // Apply defaults if not provided
+    const page = query.page || 1;
+    const limit = query.limit || 20;
+    const sortBy = query.sortBy || 'date';
+    const sortOrder = query.sortOrder || 'desc';
+    
     // Apply date filters
     let filteredImages = images;
     if (query.fromDate) {
@@ -41,7 +47,7 @@ export class GalleryService {
     filteredImages.sort((a, b) => {
       let compareValue = 0;
       
-      switch (query.sortBy) {
+      switch (sortBy) {
         case 'date':
           compareValue = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
           break;
@@ -53,24 +59,24 @@ export class GalleryService {
           break;
       }
       
-      return query.sortOrder === 'asc' ? compareValue : -compareValue;
+      return sortOrder === 'asc' ? compareValue : -compareValue;
     });
     
     // Paginate
     const total = filteredImages.length;
-    const totalPages = Math.ceil(total / query.limit);
-    const start = (query.page - 1) * query.limit;
-    const end = start + query.limit;
+    const totalPages = Math.ceil(total / limit);
+    const start = (page - 1) * limit;
+    const end = start + limit;
     const paginatedImages = filteredImages.slice(start, end);
     
     return {
       images: paginatedImages,
       total,
-      page: query.page,
-      limit: query.limit,
+      page,
+      limit,
       totalPages,
-      hasNext: query.page < totalPages,
-      hasPrev: query.page > 1,
+      hasNext: page < totalPages,
+      hasPrev: page > 1,
     };
   }
   
