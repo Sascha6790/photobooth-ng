@@ -1,0 +1,169 @@
+name: Auto-merge Dependabot PRs
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+
+jobs:
+  dependabot-auto-merge:
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    steps:
+      - name: 🤖 Dependabot Metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: 📊 Check Update Type
+        id: check-update
+        run: |
+          echo "Update type: ${{ steps.metadata.outputs.update-type }}"
+          echo "Dependency type: ${{ steps.metadata.outputs.dependency-type }}"
+          echo "Package ecosystem: ${{ steps.metadata.outputs.package-ecosystem }}"
+          
+          # Set auto-merge eligibility
+          if [[ "${{ steps.metadata.outputs.update-type }}" == "version-update:semver-patch" ]]; then
+            echo "auto_merge=true" >> $GITHUB_OUTPUT
+            echo "✅ Patch update - eligible for auto-merge" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ steps.metadata.outputs.update-type }}" == "version-update:semver-minor" ]] && [[ "${{ steps.metadata.outputs.dependency-type }}" == "development" ]]; then
+            echo "auto_merge=true" >> $GITHUB_OUTPUT
+            echo "✅ Minor dev dependency update - eligible for auto-merge" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "auto_merge=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Major or production minor update - requires manual review" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: ⏳ Wait for Checks
+        if: steps.check-update.outputs.auto_merge == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // Wait for all checks to complete
+            const maxAttempts = 30; // 15 minutes max wait
+            let attempt = 0;
+            
+            while (attempt < maxAttempts) {
+              const { data: pr } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number
+              });
+              
+              const { data: checkRuns } = await github.rest.checks.listForRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: pr.head.sha
+              });
+              
+              const allCompleted = checkRuns.check_runs.every(run => 
+                run.status === 'completed' && run.name !== 'dependabot-auto-merge'
+              );
+              
+              const allSuccessful = checkRuns.check_runs.every(run => 
+                run.name === 'dependabot-auto-merge' || 
+                (run.status === 'completed' && run.conclusion === 'success')
+              );
+              
+              if (allCompleted) {
+                if (allSuccessful) {
+                  console.log('All checks passed successfully');
+                  return true;
+                } else {
+                  console.log('Some checks failed');
+                  core.setFailed('PR checks did not pass');
+                  return false;
+                }
+              }
+              
+              console.log(`Waiting for checks to complete (attempt ${attempt + 1}/${maxAttempts})`);
+              await new Promise(resolve => setTimeout(resolve, 30000)); // Wait 30 seconds
+              attempt++;
+            }
+            
+            core.setFailed('Timeout waiting for checks to complete');
+
+      - name: ✅ Auto-merge PR
+        if: steps.check-update.outputs.auto_merge == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // Enable auto-merge
+            const mutation = `
+              mutation($pullRequestId: ID!) {
+                enablePullRequestAutoMerge(input: {
+                  pullRequestId: $pullRequestId,
+                  mergeMethod: SQUASH
+                }) {
+                  pullRequest {
+                    autoMergeRequest {
+                      enabledAt
+                    }
+                  }
+                }
+              }
+            `;
+            
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            
+            await github.graphql(mutation, {
+              pullRequestId: pr.node_id
+            });
+            
+            console.log('Auto-merge enabled for PR #' + context.issue.number);
+            
+            // Add approval comment
+            await github.rest.pulls.createReview({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              event: 'APPROVE',
+              body: '✅ Auto-approved: This is a safe dependency update (patch version or dev dependency minor version).'
+            });
+
+      - name: 🏷️ Add Labels
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const labels = ['dependencies'];
+            
+            // Add update type label
+            if ('${{ steps.metadata.outputs.update-type }}' === 'version-update:semver-patch') {
+              labels.push('patch-update');
+            } else if ('${{ steps.metadata.outputs.update-type }}' === 'version-update:semver-minor') {
+              labels.push('minor-update');
+            } else if ('${{ steps.metadata.outputs.update-type }}' === 'version-update:semver-major') {
+              labels.push('major-update', 'needs-review');
+            }
+            
+            // Add dependency type label
+            if ('${{ steps.metadata.outputs.dependency-type }}' === 'development') {
+              labels.push('dev-dependency');
+            } else {
+              labels.push('production-dependency');
+            }
+            
+            // Add auto-merge label if applicable
+            if ('${{ steps.check-update.outputs.auto_merge }}' === 'true') {
+              labels.push('auto-merge');
+            }
+            
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: labels
+            });

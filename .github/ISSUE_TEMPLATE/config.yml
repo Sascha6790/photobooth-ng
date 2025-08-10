@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 💬 Discussions
+    url: https://github.com/Sascha6790/photobooth-ng/discussions
+    about: Ask questions and discuss ideas with the community
+  - name: 📖 Documentation
+    url: https://github.com/Sascha6790/photobooth-ng/wiki
+    about: Check out the documentation and guides
+  - name: 🔒 Security Issue
+    url: mailto:security@example.com
+    about: Please report security vulnerabilities privately

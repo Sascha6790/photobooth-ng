@@ -1,0 +1,160 @@
+# Dependabot configuration for automated dependency updates
+# Documentation: https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically
+
+version: 2
+updates:
+  # JavaScript/TypeScript dependencies (npm)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 10
+    pull-request-branch-name:
+      separator: "/"
+    reviewers:
+      - "sascha"
+    assignees:
+      - "sascha"
+    labels:
+      - "dependencies"
+      - "javascript"
+      - "automated"
+    groups:
+      angular:
+        patterns:
+          - "@angular/*"
+          - "@angular-devkit/*"
+          - "@angular-eslint/*"
+        update-types:
+          - "minor"
+          - "patch"
+      nestjs:
+        patterns:
+          - "@nestjs/*"
+        update-types:
+          - "minor"
+          - "patch"
+      testing:
+        patterns:
+          - "@playwright/*"
+          - "jest*"
+          - "@types/jest"
+        update-types:
+          - "minor"
+          - "patch"
+      build-tools:
+        patterns:
+          - "@nx/*"
+          - "nx"
+          - "webpack*"
+          - "typescript"
+          - "ts-node"
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # Major version updates that might break compatibility
+      - dependency-name: "@angular/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@nestjs/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    milestone: 2
+
+  # Docker base images
+  - package-ecosystem: "docker"
+    directory: "/apps/backend"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      time: "02:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "sascha"
+    assignees:
+      - "sascha"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "automated"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
+
+  - package-ecosystem: "docker"
+    directory: "/apps/frontend"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      time: "02:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "sascha"
+    assignees:
+      - "sascha"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "automated"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "03:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "sascha"
+    assignees:
+      - "sascha"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "automated"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+
+  # Python dependencies (if Raspberry Pi scripts use pip)
+  - package-ecosystem: "pip"
+    directory: "/../raspberry-pi"
+    schedule:
+      interval: "monthly"
+      time: "03:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "sascha"
+    assignees:
+      - "sascha"
+    labels:
+      - "dependencies"
+      - "python"
+      - "raspberry-pi"
+      - "automated"
+    commit-message:
+      prefix: "deps-pi"
+      include: "scope"
+    allow:
+      # Only allow updates for direct dependencies
+      - dependency-type: "direct"
+    ignore:
+      # Ignore specific packages that might break Raspberry Pi compatibility
+      - dependency-name: "RPi.GPIO"
+        update-types: ["version-update:semver-major"]

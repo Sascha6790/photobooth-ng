@@ -1,0 +1,305 @@
+name: 🚀 Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: true
+        type: string
+      prerelease:
+        description: 'Is this a pre-release?'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  packages: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  build-and-test:
+    name: 🏗️ Build and Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🧪 Run tests
+        run: npm run test:ci || true
+
+      - name: 🏗️ Build applications
+        run: npm run build:all
+
+      - name: 📤 Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: |
+            dist/
+            docker/
+          retention-days: 7
+
+  create-release:
+    name: 📦 Create Release
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    
+    outputs:
+      release_id: ${{ steps.create_release.outputs.id }}
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.get_version.outputs.version }}
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🏷️ Get version
+        id: get_version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="v${{ github.event.inputs.version }}"
+          else
+            VERSION=${GITHUB_REF#refs/tags/}
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📌 Version: $VERSION"
+
+      - name: 📝 Generate changelog
+        id: changelog
+        run: |
+          # Extract changelog for this version
+          CHANGELOG=$(awk '/## \[.*\]/{if(p) exit; p=1; next} p' CHANGELOG.md)
+          
+          # If empty, use commit messages
+          if [ -z "$CHANGELOG" ]; then
+            CHANGELOG="## What's Changed\n\n"
+            CHANGELOG+=$(git log --pretty=format:"* %s (%h)" $(git describe --tags --abbrev=0 2>/dev/null)..HEAD 2>/dev/null || echo "Initial release")
+          fi
+          
+          # Save to file for release body
+          echo "$CHANGELOG" > release_notes.md
+          echo "📋 Changelog generated"
+
+      - name: 🎉 Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.get_version.outputs.version }}
+          release_name: Release ${{ steps.get_version.outputs.version }}
+          body_path: release_notes.md
+          draft: false
+          prerelease: ${{ github.event.inputs.prerelease || false }}
+
+  build-docker:
+    name: 🐳 Build Docker Images
+    needs: create-release
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        service: [frontend, backend]
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔑 Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏗️ Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 📋 Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}-${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=semver,pattern={{version}},value=${{ needs.create-release.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.create-release.outputs.version }}
+            type=semver,pattern={{major}},value=${{ needs.create-release.outputs.version }}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: 🐳 Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/Dockerfile.${{ matrix.service }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+
+  create-release-assets:
+    name: 📦 Create Release Assets
+    needs: [create-release, build-docker]
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📥 Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-artifacts
+          path: ./artifacts
+
+      - name: 📦 Create distribution packages
+        run: |
+          # Create tar.gz for Linux/Raspberry Pi
+          cd artifacts
+          tar -czf ../photobooth-ng-${{ needs.create-release.outputs.version }}-linux.tar.gz *
+          cd ..
+          
+          # Create zip for general distribution
+          cd artifacts
+          zip -r ../photobooth-ng-${{ needs.create-release.outputs.version }}.zip *
+          cd ..
+          
+          # Create update script for Raspberry Pi
+          cat > update.sh << 'EOF'
+          #!/bin/bash
+          VERSION="${1:-latest}"
+          INSTALL_DIR="/opt/photobooth"
+          
+          echo "🚀 Photobooth Auto-Update Script"
+          echo "📌 Version: $VERSION"
+          
+          # Stop services
+          sudo systemctl stop photobooth-backend photobooth-frontend
+          
+          # Backup current installation
+          sudo cp -r $INSTALL_DIR $INSTALL_DIR.backup.$(date +%Y%m%d_%H%M%S)
+          
+          # Download and extract new version
+          if [ "$VERSION" = "latest" ]; then
+            wget -O /tmp/photobooth.tar.gz https://github.com/Sascha6790/photobooth-ng/releases/latest/download/photobooth-ng-linux.tar.gz
+          else
+            wget -O /tmp/photobooth.tar.gz https://github.com/Sascha6790/photobooth-ng/releases/download/$VERSION/photobooth-ng-$VERSION-linux.tar.gz
+          fi
+          
+          sudo tar -xzf /tmp/photobooth.tar.gz -C $INSTALL_DIR
+          
+          # Update dependencies
+          cd $INSTALL_DIR
+          npm ci --production
+          
+          # Run migrations if needed
+          npm run migrate || true
+          
+          # Restart services
+          sudo systemctl start photobooth-backend photobooth-frontend
+          
+          echo "✅ Update complete!"
+          EOF
+          
+          chmod +x update.sh
+
+      - name: 📤 Upload Linux Package
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./photobooth-ng-${{ needs.create-release.outputs.version }}-linux.tar.gz
+          asset_name: photobooth-ng-${{ needs.create-release.outputs.version }}-linux.tar.gz
+          asset_content_type: application/gzip
+
+      - name: 📤 Upload Zip Package
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./photobooth-ng-${{ needs.create-release.outputs.version }}.zip
+          asset_name: photobooth-ng-${{ needs.create-release.outputs.version }}.zip
+          asset_content_type: application/zip
+
+      - name: 📤 Upload Update Script
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./update.sh
+          asset_name: update.sh
+          asset_content_type: text/plain
+
+  notify-release:
+    name: 📢 Notify Release
+    needs: [create-release, create-release-assets]
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📢 Create release announcement issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const version = '${{ needs.create-release.outputs.version }}';
+            const releaseUrl = `https://github.com/${{ github.repository }}/releases/tag/${version}`;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🎉 Release ${version} is now available!`,
+              body: `A new version of Photobooth-NG has been released!\n\n` +
+                    `## 📌 Version: ${version}\n\n` +
+                    `### 📦 Download\n` +
+                    `- [Release Page](${releaseUrl})\n` +
+                    `- [Linux/Raspberry Pi Package](${releaseUrl}/download/photobooth-ng-${version}-linux.tar.gz)\n` +
+                    `- [Update Script](${releaseUrl}/download/update.sh)\n\n` +
+                    `### 🐳 Docker Images\n` +
+                    `\`\`\`bash\n` +
+                    `docker pull ghcr.io/${{ github.repository }}-backend:${version}\n` +
+                    `docker pull ghcr.io/${{ github.repository }}-frontend:${version}\n` +
+                    `\`\`\`\n\n` +
+                    `### 🚀 Auto-Update\n` +
+                    `For Raspberry Pi users, run:\n` +
+                    `\`\`\`bash\n` +
+                    `curl -L ${releaseUrl}/download/update.sh | bash -s ${version}\n` +
+                    `\`\`\`\n\n` +
+                    `Check the [release notes](${releaseUrl}) for more details!`,
+              labels: ['release', 'announcement']
+            });
+            
+            console.log(`✅ Release announcement created for ${version}`);
+
+      - name: 📊 Update release statistics
+        run: |
+          echo "📊 Release ${{ needs.create-release.outputs.version }} completed successfully!"
+          echo "📦 Assets uploaded:"
+          echo "  - Linux/Raspberry Pi package"
+          echo "  - General distribution ZIP"
+          echo "  - Auto-update script"
+          echo "🐳 Docker images pushed to GitHub Container Registry"

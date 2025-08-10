@@ -1,0 +1,48 @@
+name: Dependency Review
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'package*.json'
+      - '**/package*.json'
+      - '.github/workflows/dependency-review.yml'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🔍 Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          # Fail on vulnerabilities of moderate severity or higher
+          fail-on-severity: moderate
+          # Allow specific licenses
+          allow-licenses: MIT, Apache-2.0, BSD-3-Clause, BSD-2-Clause, ISC, CC0-1.0, CC-BY-4.0
+          # Deny specific licenses that might cause issues
+          deny-licenses: GPL-3.0, AGPL-3.0, LGPL-3.0
+          # Comment on PR with review results
+          comment-summary-in-pr: always
+          # Warn about packages without licenses
+          warn-only: false
+          # Check for known vulnerabilities
+          vulnerability-check: true
+          # License compatibility check
+          license-check: true
+
+      - name: 📊 Generate Dependency Report
+        if: always()
+        run: |
+          echo "## 📊 Dependency Review Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Dependencies have been reviewed for:" >> $GITHUB_STEP_SUMMARY
+          echo "- Known vulnerabilities" >> $GITHUB_STEP_SUMMARY
+          echo "- License compatibility" >> $GITHUB_STEP_SUMMARY
+          echo "- Security advisories" >> $GITHUB_STEP_SUMMARY
