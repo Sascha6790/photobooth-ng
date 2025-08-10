@@ -33,6 +33,7 @@ npm-debug.log
 yarn-error.log
 testem.log
 /typings
+/logs
 
 # System Files
 .DS_Store
@@ -49,3 +50,9 @@ Thumbs.db
 *.log
 logs/
 *.log.*
+
+# Generated documentation
+docs/api/
+docs/_site/
+.jekyll-cache/
+.jekyll-metadata

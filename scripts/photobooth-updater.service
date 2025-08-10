@@ -1,0 +1,23 @@
+[Unit]
+Description=Photobooth Auto-Update Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/photobooth/scripts/auto-update.sh check
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=photobooth-updater
+User=root
+Group=root
+
+# Restart on failure
+Restart=on-failure
+RestartSec=30
+
+# Environment
+Environment="NODE_ENV=production"
+
+[Install]
+WantedBy=multi-user.target

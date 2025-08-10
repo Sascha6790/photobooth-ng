@@ -20,7 +20,11 @@
     "docker:down": "docker-compose down",
     "migration:generate": "npm run typeorm -- migration:generate",
     "migration:run": "npm run typeorm -- migration:run",
-    "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js"
+    "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
+    "docs:generate": "compodoc -p ./backend/tsconfig.json -d ./docs/api --theme stripe --hideGenerator --disableGraph",
+    "docs:serve": "compodoc -s -d ./docs/api",
+    "docs:build": "npm run docs:generate && npm run docs:jekyll",
+    "docs:jekyll": "cd ./docs && bundle exec jekyll build"
   },
   "private": true,
   "devDependencies": {
@@ -30,6 +34,7 @@
     "@angular/cli": "~20.1.0",
     "@angular/compiler-cli": "~20.1.0",
     "@angular/language-service": "~20.1.0",
+    "@compodoc/compodoc": "^1.1.26",
     "@eslint/js": "^9.8.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.0",

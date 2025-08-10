@@ -1,0 +1,31 @@
+{
+  "types": [
+    {"type": "feat", "section": "✨ Features"},
+    {"type": "fix", "section": "🐛 Bug Fixes"},
+    {"type": "perf", "section": "⚡ Performance Improvements"},
+    {"type": "refactor", "section": "♻️ Code Refactoring"},
+    {"type": "docs", "section": "📚 Documentation"},
+    {"type": "style", "section": "🎨 Styles"},
+    {"type": "test", "section": "🧪 Tests"},
+    {"type": "build", "section": "🏗️ Build System"},
+    {"type": "ci", "section": "👷 CI/CD"},
+    {"type": "chore", "section": "🔧 Chores"},
+    {"type": "revert", "section": "⏪ Reverts"},
+    {"type": "hardware", "section": "🔌 Hardware Integration"},
+    {"type": "docker", "section": "🐳 Docker"},
+    {"type": "security", "section": "🔒 Security"}
+  ],
+  "commitUrlFormat": "https://github.com/Sascha6790/photobooth-ng/commit/{{hash}}",
+  "compareUrlFormat": "https://github.com/Sascha6790/photobooth-ng/compare/{{previousTag}}...{{currentTag}}",
+  "issueUrlFormat": "https://github.com/Sascha6790/photobooth-ng/issues/{{id}}",
+  "releaseCommitMessageFormat": "chore(release): 🚀 v{{currentTag}}",
+  "skip": {
+    "bump": false,
+    "changelog": false,
+    "commit": false,
+    "tag": false
+  },
+  "scripts": {
+    "postchangelog": "prettier --write CHANGELOG.md"
+  }
+}

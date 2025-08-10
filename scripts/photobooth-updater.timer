@@ -1,0 +1,20 @@
+[Unit]
+Description=Photobooth Auto-Update Timer
+Requires=photobooth-updater.service
+
+[Timer]
+# Run daily at 3 AM
+OnCalendar=daily
+OnCalendar=*-*-* 03:00:00
+
+# Also run 5 minutes after boot
+OnBootSec=5min
+
+# If missed (e.g., system was off), run as soon as possible
+Persistent=true
+
+# Randomize start time by up to 30 minutes to avoid load spikes
+RandomizedDelaySec=30min
+
+[Install]
+WantedBy=timers.target

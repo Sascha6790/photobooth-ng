@@ -1,0 +1,69 @@
+title: Photobooth Documentation
+description: Modern Photobooth Application with NestJS & Angular
+theme: jekyll-theme-minimal
+baseurl: /photobooth-ng
+url: https://sascha.github.io
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+
+# Navigation
+navigation:
+  - title: Home
+    url: /
+  - title: Getting Started
+    url: /guides/getting-started
+  - title: API Documentation
+    url: /api/
+  - title: Hardware Setup
+    url: /hardware/
+  - title: Configuration
+    url: /setup/configuration
+  - title: Deployment
+    url: /setup/deployment
+
+# Exclude files from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules/
+  - vendor/
+  - .sass-cache/
+  - .jekyll-cache/
+  - .jekyll-metadata
+
+# Collections
+collections:
+  guides:
+    output: true
+    permalink: /guides/:name
+  hardware:
+    output: true
+    permalink: /hardware/:name
+  setup:
+    output: true
+    permalink: /setup/:name
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "guides"
+    values:
+      layout: "page"
+  - scope:
+      path: ""
+      type: "hardware"
+    values:
+      layout: "page"
+  - scope:
+      path: ""
+      type: "setup"
+    values:
+      layout: "page"
+
+# Plugins
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
